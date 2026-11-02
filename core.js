@@ -54,7 +54,7 @@
     function add(k, t) { t = winAnsi(t).trim(); if (!t) return; var f = fit(t, L[k].w, measure); out.push({ k: k, t: t, x: L[k].x, y: L[k].y, s: f.s, over: f.over }); }
     add("fam", (d.fam || "").toUpperCase()); add("giv", d.giv); add("mrn", d.mrn);
     if (d.dob) { var p = d.dob.split("-"); add("dd", p[2]); add("mm", p[1]); add("yy", p[0]); }
-    add("mo", d.mo); add("a1", d.a1); add("a2", d.a2); add("ward", d.ward); add("fac", d.fac);
+    add("mo", d.amo); add("fac", d.fac);
     add("prac1", d.prac); add("pracPrint", d.prac); add("prac2", d.prac);
     var w = wrap2(d.proc, L.proc1.w, measure);
     if (w.lines[0]) out.push({ k: "proc1", t: w.lines[0], x: L.proc1.x, y: L.proc1.y, s: w.s, over: w.over });
@@ -109,7 +109,7 @@
   function parseLabel(raw) {
     var text = String(raw || "").replace(/\r/g, "");
     var lines = text.split("\n").map(function (l) { return l.replace(/\s+/g, " ").trim(); }).filter(Boolean);
-    var all = lines.join("\n"), r = { fam: "", giv: "", mrn: "", dob: "", sex: "", a1: "", a2: "", mo: "", ward: "" }, used = {};
+    var all = lines.join("\n"), r = { fam: "", giv: "", mrn: "", dob: "", amo: "", sex: "", a1: "", a2: "", ward: "" }, used = {};
     var m;
 
     m = all.match(/\b(?:MRN|URN|UR\s*No\.?|UR|MR\s*No\.?|Hosp(?:ital)?\s*No\.?)\s*[:#.]?\s*([A-Z]{0,3}\d[\dA-Z\-]{3,})/i);
@@ -119,8 +119,17 @@
     if (dm) r.dob = isoFrom(dm[1], dm[2], dm[3]);
     m = all.match(/\b(?:Sex|Gender)\s*[:.]?\s*(Male|Female|M|F)\b/i) || all.match(/(?:^|\s)(Male|Female|M|F)(?=\s|$)/);
     if (m) r.sex = m[1].charAt(0).toUpperCase();
-    m = all.match(/\bMedicare\s*(?:No\.?)?\s*[:.]?\s*([\d ]{10,14}(?:\s*\/\s*\d)?)/i);
-    if (m) r.mo = "Medicare " + m[1].trim(); else { m = all.match(/\b(?:M\.?O\.?|Dr|Doctor|Consultant)\s*[:.]\s*([^\n]+)/i); if (m) r.mo = m[1].trim(); }
+    // AMO (admitting medical officer): "AMO: LASTNAME, Firstname" becomes "Dr Firstname Lastname"
+    for (var a = 0; a < lines.length; a++) {
+      var am = lines[a].match(/\bA\.?M\.?O\.?\s*[:.\-]?\s*(.+)$/i);
+      if (!am) continue;
+      used[a] = 1;
+      var who = am[1].split(/\s{2,}|\t|\b(?:MRN|URN|DOB|Ward|Sex)\b/i)[0].replace(/^(Dr\.?|Doctor|Prof\.?|A\/Prof\.?)\s+/i, "").trim();
+      var cm = who.match(/^([^,]+),\s*(.+)$/);
+      var full = cm ? titleCase(cm[2].trim()) + " " + titleCase(cm[1].trim()) : titleCase(who);
+      if (full.trim()) r.amo = "Dr " + full.trim();
+      break;
+    }
     m = all.match(/\b(?:Ward|Location|Loc)\s*[:.]?\s*([^\n]+)/i);
     if (m) r.ward = m[1].trim();
 
@@ -139,7 +148,7 @@
     var nameLine = m ? m[1] : "";
     if (!nameLine) {
       for (var j = 0; j < lines.length; j++) {
-        if (used[j]) continue;
+        if (used[j] || /\bA\.?M\.?O\b|\bDr\b/i.test(lines[j])) continue;
         var ln = lines[j];
         if (/\d/.test(ln) || /\b(MRN|URN|DOB|Sex|Ward|Medicare|Address|Hospital|Westmead|Children)\b/i.test(ln)) continue;
         if (/^[A-Z][A-Z'\-]+(?:\s[A-Z][A-Z'\-]+)?\s*,\s*[A-Za-z]/.test(ln) || /^[A-Z][A-Z'\-]{1,}\s+[A-Z][a-z]/.test(ln) || /[A-Z][a-z]+\s+[A-Z][A-Z'\-]{1,}$/.test(ln)) { nameLine = ln; break; }

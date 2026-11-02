@@ -137,7 +137,7 @@ details.preview[open] summary::after{content:"Hide"}
       <label class="btn" for="barcodePhoto">Barcode from photo</label>
       <input type="file" id="barcodePhoto" accept="image/*" capture="environment" hidden>
     </div>
-    <p class="hint" id="barcodeHint">The barcode usually holds the MRN. Use the label text below for the name, date of birth and address.</p>
+    <p class="hint" id="barcodeHint">The barcode usually holds the MRN. Use the label text below for the name, date of birth and AMO.</p>
     <div class="f">
       <label class="lbl" for="labelText">Label text</label>
       <textarea id="labelText" class="scanbox" rows="4" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here twice, then Scan Text"></textarea>
@@ -155,10 +155,7 @@ details.preview[open] summary::after{content:"Hide"}
           <label><input type="radio" name="sex" value="F" id="sexF">Female</label>
           <label><input type="radio" name="sex" value="" id="sexU" checked>Not stated</label>
         </div></div>
-      <div class="f full"><label class="lbl" for="a1">Address</label><input id="a1" type="text" autocomplete="off"></div>
-      <div class="f full"><label class="lbl" for="a2">Suburb, state, postcode</label><input id="a2" type="text" autocomplete="off" autocapitalize="characters"></div>
-      <div class="f s2"><label class="lbl" for="mo">M.O.</label><input id="mo" type="text" autocomplete="off"></div>
-      <div class="f s2"><label class="lbl" for="ward">Location / ward</label><input id="ward" type="text" autocomplete="off"></div>
+      <div class="f full"><label class="lbl" for="amo">AMO (surgeon)</label><input id="amo" type="text" autocomplete="off" autocapitalize="words" placeholder="From the label, e.g. Dr Jane Smith"><span class="hint">Printed in the M.O. box on the form.</span></div>
     </div>
   </section>
 
@@ -243,7 +240,7 @@ var font=null,measure=C.makeMeasure(null),templateBytes=null,img=$("formImg");
 var strokes=[],sigPng=null,sigAspect=3,sigBytes=null;
 var ready={file:null,key:""};
 
-var FIELDS=["fam","giv","mrn","dob","a1","a2","mo","ward","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
+var FIELDS=["fam","giv","mrn","dob","amo","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
 var KEEP=["prac","fac","admEmail"];
 var store={get:function(k){try{return localStorage.getItem(k)||""}catch(e){return""}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 function v(id){return $(id).value.trim()}
@@ -254,6 +251,7 @@ function nowTime(){var d=new Date();return String(d.getHours()).padStart(2,"0")+
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 
 /* ---------- label text ---------- */
+function fillPracFromAmo(){if(!v("prac")&&v("amo"))$("prac").value=v("amo")}
 var parseTimer=null;
 $("labelText").addEventListener("input",function(){clearTimeout(parseTimer);parseTimer=setTimeout(applyLabel,350)});
 $("pasteLabel").addEventListener("click",function(){
@@ -265,9 +263,10 @@ $("clearLabel").addEventListener("click",function(){$("labelText").value="";$("l
 function applyLabel(){
   var t=$("labelText").value;if(!t.trim())return;
   var r=C.parseLabel(t),got=[];
-  [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["a1","Address"],["a2","Suburb"],["mo","M.O."],["ward","Ward"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
+  [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["amo","AMO"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
   if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
-  var miss=["Family name","Given name","MRN","Date of birth"].filter(function(x){return got.indexOf(x)<0});
+    fillPracFromAmo();
+  var miss=["Family name","Given name","MRN","Date of birth","AMO"].filter(function(x){return got.indexOf(x)<0});
   $("parseHint").className="hint"+(miss.length?" warn":"");
   $("parseHint").textContent=got.length?(miss.length?"Filled what it could. Type in: "+miss.join(", ")+".":"Filled from the label. Check each field against it."):"Couldn't find patient details in that text. Type them in below.";
   $("exampleNote").hidden=true;setMrnHint();update();
@@ -289,9 +288,9 @@ function gotBarcode(text,fmt){
   var richer=/[\^|~\n\r\t]/.test(t)||t.length>24;
   if(richer){
     var r=C.parseLabel(t.replace(/[\^|~\t]/g,"\n")),got=[];
-    [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["a1","Address"],["a2","Suburb"],["mo","M.O."],["ward","Ward"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
-    if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
-    lastBarcode=r.mrn||"";
+    [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["amo","AMO"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
+  if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
+        fillPracFromAmo();lastBarcode=r.mrn||"";
     $("barcodeHint").className="hint";$("barcodeHint").textContent="Barcode read: "+t.replace(/[\^|~\n\r\t]+/g," · ")+(got.length?" (filled "+got.join(", ")+")":"");
   }else{
     lastBarcode=t;$("mrn").value=t;
@@ -502,7 +501,7 @@ function exportSig(){
 $("sigClear").addEventListener("click",function(){strokes.length=0;redrawPad();exportSig()});
 
 /* ---------- patient reset & example ---------- */
-var EXAMPLE={labelText:"NGUYEN, Oliver\nMRN: 0004417123   DOB: 14/03/2022   M\n12 Example Street\nWESTMEAD NSW 2145\nWard: Day Surgery Unit",
+var EXAMPLE={labelText:"NGUYEN, Oliver\nMRN: 0004417123   DOB: 14/03/2022   M\nAMO: EXAMPLE, Henry\n12 Example Street\nWESTMEAD NSW 2145",
   prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
   cond:"Right undescended testis",proc2:"Right inguinal orchidopexy",parName:"Linh Nguyen",parEmail:"parent@example.com"};
 function clearPatient(){
@@ -510,7 +509,7 @@ function clearPatient(){
   $("labelText").value="";$("sexU").checked=true;$("dt").value=todayIso();$("tm").value=nowTime();
   $("parseHint").className="hint";$("parseHint").textContent="Nothing leaves this phone. Check every field against the label.";
   strokes.length=0;sigPng=null;sigBytes=null;redrawPad();ready.file=null;ready.key="";
-  lastBarcode="";$("mrnHint").textContent="";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use the label text below for the name, date of birth and address.";
+  lastBarcode="";$("mrnHint").textContent="";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use the label text below for the name, date of birth and AMO.";
   $("sendStatus").textContent="";$("exampleNote").hidden=true;$("previewBox").open=false;update();window.scrollTo(0,0);
 }
 $("clearAll").addEventListener("click",clearPatient);
@@ -521,8 +520,8 @@ $("loadExample").addEventListener("click",function(e){e.preventDefault();clearPa
 
 /* ---------- start ---------- */
 FIELDS.forEach(function(k){$(k).addEventListener("input",function(){if(KEEP.indexOf(k)>=0)store.set(k,v(k));update()})});
-document.querySelectorAll('input[name=sex]').forEach(function(r){r.addEventListener("change",update)});
 $("tickAge").addEventListener("change",update);
+document.querySelectorAll('input[name=sex]').forEach(function(r){r.addEventListener("change",update)});
 $("prac").value=store.get("prac");$("admEmail").value=store.get("admEmail");$("fac").value=store.get("fac")||"The Children's Hospital at Westmead";
 $("dt").value=todayIso();$("tm").value=nowTime();
 var standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
