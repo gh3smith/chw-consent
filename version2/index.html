@@ -133,8 +133,6 @@ main .gut{padding-block:20px 64px}
     <p class="sub">On iPhone, tap the <b>Scan label</b> box, tap it again and choose <b>Scan Text</b> (on newer iPhones it is under <b>AutoFill</b>). Point at the label and tap <b>Insert</b>. Or copy the label text with Live Text in the Camera app and tap <b>Paste</b>.</p>
     <div class="row">
       <button class="btn" id="scanBarcode" type="button">Scan barcode</button>
-      <label class="btn" for="barcodePhoto">Barcode from photo</label>
-      <input type="file" id="barcodePhoto" accept="image/*" capture="environment" hidden>
       <label class="btn" for="labelPhoto" id="photoBtn" hidden>Photograph label</label>
       <input type="file" id="labelPhoto" accept="image/*" capture="environment" hidden>
     </div>
@@ -509,14 +507,14 @@ $("scanCancel").addEventListener("click",stopScan);
 $("scanBarcode").addEventListener("click",()=>{
   const bh=$("barcodeHint");
   if(!window.ZXing){bh.className="hint warn";bh.textContent="The barcode reader didn't load. Reopen the page with signal.";return}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){bh.className="hint warn";bh.textContent="The camera only works when the page is opened from its https address. Try Barcode from photo.";return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){bh.className="hint warn";bh.textContent="The camera only works when the page is opened from its https address.";return}
   $("scanMsg").textContent="Hold the barcode inside the box, about 15 cm away.";
   $("scanner").hidden=false;document.body.style.overflow="hidden";
   navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}}}).then(stream=>{
     scanStream=stream;const vid=$("scanVideo");vid.srcObject=stream;vid.setAttribute("playsinline","");return vid.play().catch(()=>{});
   }).then(()=>{
     if(!scanStream)return;
-    scanTimer=setTimeout(()=>{$("scanMsg").textContent="Still looking. Hold steady in good light, move a little closer, or cancel and use Barcode from photo."},12000);
+    scanTimer=setTimeout(()=>{$("scanMsg").textContent="Still looking. Hold steady in good light, move a little closer or further away, or use Scan label."},12000);
     scanLoop=setInterval(()=>{
       const vid=$("scanVideo");if(scanBusy||!scanStream||vid.readyState<2||!vid.videoWidth)return;
       scanBusy=true;scanTick++;
@@ -530,20 +528,9 @@ $("scanBarcode").addEventListener("click",()=>{
     },220);
   }).catch(e=>{
     stopScan();bh.className="hint warn";
-    bh.textContent=e&&(e.name==="NotAllowedError"||e.name==="SecurityError")?"Camera access was refused. Allow camera access for this site in Settings → Safari → Camera, or use Barcode from photo.":"Couldn't start the camera. Try Barcode from photo.";
+    bh.textContent=e&&(e.name==="NotAllowedError"||e.name==="SecurityError")?"Camera access was refused. Allow camera access for this site in Settings → Safari → Camera.":"Couldn't start the camera. Use Scan label instead.";
   });
 });
-$("barcodePhoto").addEventListener("change",e=>{
-  const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
-  const bh=$("barcodeHint");if(!window.ZXing){bh.className="hint warn";bh.textContent="The barcode reader didn't load. Reopen the page with signal.";return}
-  bh.className="hint";bh.textContent="Reading barcode…";
-  const url=URL.createObjectURL(file),im=new Image();
-  im.onload=()=>setTimeout(()=>{const res=findBarcode(im,im.naturalWidth,im.naturalHeight,0);URL.revokeObjectURL(url);
-    if(res)gotBarcode(res.getText());else{bh.className="hint warn";bh.textContent="No barcode found in that photo. Get the barcode filling more of the picture, sharp and well lit, and try again."}},30);
-  im.onerror=()=>{URL.revokeObjectURL(url);bh.className="hint warn";bh.textContent="That photo couldn't be opened. Try again."};
-  im.src=url;
-});
-
 /* ---------- label photo (claude.ai only) ---------- */
 let sample=null;
 $("labelPhoto").addEventListener("change",async e=>{
