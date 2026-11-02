@@ -166,12 +166,11 @@ details.preview[open] summary::after{content:"Hide"}
     <p class="sub">No abbreviations on the form. Write sides and procedures in full.</p>
     <div class="grid">
       <div class="f full"><label class="lbl" for="prac">Practitioner name</label><input id="prac" type="text" autocapitalize="words"></div>
-      <div class="f full"><label class="lbl" for="proc">Procedure or treatment, and reasons</label><textarea id="proc" rows="3"></textarea><span class="hint" id="procHint"></span></div>
+      <div class="f full"><label class="lbl" for="proc">Procedure or treatment</label><textarea id="proc" rows="2" placeholder="e.g. Right inguinal orchidopexy"></textarea><span class="hint" id="procHint"></span></div>
       <div class="f full"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint warn" id="condHint"></span></div>
-      <div class="f full"><label class="lbl" for="proc2">Procedure, for the parent section</label><input id="proc2" type="text"><span class="hint">Short name, e.g. Right inguinal orchidopexy.</span></div>
       <div class="f"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
       <div class="f"><label class="lbl" for="tm">Time</label><input id="tm" type="time"></div>
-      <div class="f"><label class="lbl" for="surg">Date of operation</label><input id="surg" type="date"></div>
+      <div class="f"><label class="lbl" for="surg">Date of operation (optional)</label><input id="surg" type="date"></div>
       <div class="f"><label class="lbl" for="interp">Interpreter</label><input id="interp" type="text" placeholder="Name, if present"></div>
       <div class="f full"><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="tickAge" checked style="width:22px;height:22px;accent-color:var(--accent)"><span id="ageBoxText">Tick the patient age box from date of birth</span></label></div>
       <div class="f full"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
@@ -242,7 +241,7 @@ var font=null,measure=C.makeMeasure(null),templateBytes=null,img=$("formImg");
 var strokes=[],sigPng=null,sigAspect=3,sigBytes=null;
 var ready={file:null,key:""};
 
-var FIELDS=["fam","giv","mrn","dob","amo","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
+var FIELDS=["fam","giv","mrn","dob","amo","prac","fac","proc","cond","dt","tm","surg","interp","parName","parEmail","admEmail"];
 var KEEP=["prac","fac","admEmail"];
 var store={get:function(k){try{return localStorage.getItem(k)||""}catch(e){return""}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 function v(id){return $(id).value.trim()}
@@ -426,12 +425,12 @@ function update(){
   var d=data(),a=C.ageOn(d.dob,d.dt),ab=C.ageBox(d.dob,d.dt);
   $("ageHint").textContent=a===null||isNaN(a)?"":a+" years";
   $("ageBoxText").textContent=ab?'Tick "'+({u14:"Under 14 years",a14:"14 – 16 years",a16:"16 years and over"})[ab]+'"':"Tick the patient age box from date of birth";
-  var lay=C.layout(d,measure),ab1=abbrevs(d.proc+" "+d.proc2+" "+d.cond);
+  var lay=C.layout(d,measure),ab1=abbrevs(d.proc+" "+d.cond);
   $("procHint").className="hint"+(lay.procOver||ab1.length?" warn":"");
-  $("procHint").textContent=!d.proc?"Fills two lines on the form.":lay.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?"Possible abbreviations: "+ab1.join(", ")+". Write them in full.":"Fits on the form.";
+  $("procHint").textContent=!d.proc?"Printed in both the practitioner and parent sections.":lay.procLineOver?"Too long for the one line in the parent section. Shorten it.":lay.procOver?"Too long for the form. Shorten it.":ab1.length?"Possible abbreviations: "+ab1.join(", ")+". Write them in full.":"Fits in both sections of the form.";
   var condOver=lay.text.some(function(t){return t.k==="cond"&&t.over});
   $("condHint").textContent=condOver?"Too long for the line. Shorten it.":"";
-  var need=[["Patient name",d.fam&&d.giv,d.fam?"giv":"fam"],["MRN",d.mrn,"mrn"],["Date of birth",d.dob,"dob"],["Practitioner",d.prac,"prac"],["Procedure",d.proc&&!lay.procOver,"proc"],["Condition",d.cond,"cond"],["Parent-section procedure",d.proc2,"proc2"],["Operation date",d.surg,"surg"],["Signature",strokes.length>0,"pad"],["Blank form loaded",!!templateBytes,""]];
+  var need=[["Patient name",d.fam&&d.giv,d.fam?"giv":"fam"],["MRN",d.mrn,"mrn"],["Date of birth",d.dob,"dob"],["Practitioner",d.prac,"prac"],["Procedure",d.proc&&!lay.procOver,"proc"],["Condition",d.cond,"cond"],["Signature",strokes.length>0,"pad"],["Blank form loaded",!!templateBytes,""]];
   $("checks").innerHTML=need.map(function(n){return '<div><span class="dot '+(n[1]?"ok":"")+'"></span>'+n[0]+"</div>"}).join("");
   var ok=need.every(function(n){return n[1]});
   missing=need.filter(function(n){return !n[1]});
@@ -441,18 +440,18 @@ function update(){
   if(ok)schedulePdf();else{ready.file=null;ready.key=""}
 }
 function buildMails(d){
-  var child=d.giv||"your child",par=d.parName?d.parName.split(" ")[0]:"",op=d.proc2||"[procedure]",sd=longDate(d.surg),pn=[d.giv,d.fam?C.titleCase(d.fam):""].filter(Boolean).join(" ");
-  mails[1]={to:d.parEmail,sub:"Consent form for "+child+"'s operation on "+sd,body:
-"Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead on "+sd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead"};
-  mails[2]={to:d.admEmail,sub:"Consent form – "+(d.fam||"").toUpperCase()+", "+d.giv+" – MRN "+d.mrn+" – "+op+" – "+C.ausDate(d.surg),body:
-"Hi Admissions,\n\nAttached is the consent form (SCN020.001) for:\n\nPatient: "+pn+"\nMRN: "+d.mrn+"\nDOB: "+C.ausDate(d.dob)+"\nProcedure: "+op+"\nDate of operation: "+C.ausDate(d.surg)+"\nPractitioner: "+d.prac+"\n\nThe practitioner section is completed and signed. The family has been emailed a copy to print, sign and bring on the day. Please file this copy for the admission.\n\nThanks,\n"+d.prac};
+  var child=d.giv||"your child",par=d.parName?d.parName.split(" ")[0]:"",op=d.proc||"[procedure]",sd=d.surg?longDate(d.surg):"",onSd=sd?" on "+sd:"",pn=[d.giv,d.fam?C.titleCase(d.fam):""].filter(Boolean).join(" ");
+  mails[1]={to:d.parEmail,sub:"Consent form for "+child+"'s operation"+onSd,body:
+"Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead"+onSd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead"};
+  mails[2]={to:d.admEmail,sub:"Consent form – "+(d.fam||"").toUpperCase()+", "+d.giv+" – MRN "+d.mrn+" – "+op+(d.surg?" – "+C.ausDate(d.surg):""),body:
+"Hi Admissions,\n\nAttached is the consent form (SCN020.001) for:\n\nPatient: "+pn+"\nMRN: "+d.mrn+"\nDOB: "+C.ausDate(d.dob)+"\nProcedure: "+op+(d.surg?"\nDate of operation: "+C.ausDate(d.surg):"")+"\nPractitioner: "+d.prac+"\n\nThe practitioner section is completed and signed. The family has been emailed a copy to print, sign and bring on the day. Please file this copy for the admission.\n\nThanks,\n"+d.prac};
   [1,2].forEach(function(k){$("m"+k+"to").textContent=mails[k].to||(k===1?"Parent email not entered":"Admissions email not entered");$("m"+k+"sub").textContent=mails[k].sub;$("m"+k+"body").textContent=mails[k].body});
 }
 
 /* ---------- PDF, built ahead so the share sheet opens straight from the tap ---------- */
 var pdfTimer=null;
 function stateKey(d){return JSON.stringify(d)+"|"+(sigPng?sigPng.length+":"+strokes.length:"")}
-function fileName(d){return "Consent_"+C.winAnsi(d.fam).toUpperCase().replace(/[^A-Z0-9]+/g,"")+"_"+d.mrn.replace(/[^A-Za-z0-9]+/g,"")+"_"+(d.surg.replace(/-/g,"")||"undated")+".pdf"}
+function fileName(d){return "Consent_"+C.winAnsi(d.fam).toUpperCase().replace(/[^A-Z0-9]+/g,"")+"_"+d.mrn.replace(/[^A-Za-z0-9]+/g,"")+(d.surg?"_"+d.surg.replace(/-/g,""):"")+".pdf"}
 function schedulePdf(){clearTimeout(pdfTimer);pdfTimer=setTimeout(makePdf,300)}
 function makePdf(){
   var d=data(),key=stateKey(d);if(ready.key===key&&ready.file)return Promise.resolve(ready.file);
@@ -516,8 +515,8 @@ $("sigClear").addEventListener("click",function(){strokes.length=0;redrawPad();e
 
 /* ---------- patient reset & example ---------- */
 var EXAMPLE={labelText:"NGUYEN, Oliver\nMRN: 0004417123   DOB: 14/03/2022   M\nAMO: EXAMPLE, Henry\n12 Example Street\nWESTMEAD NSW 2145",
-  prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
-  cond:"Right undescended testis",proc2:"Right inguinal orchidopexy",parName:"Linh Nguyen",parEmail:"parent@example.com"};
+  prac:"Dr Henry Example",proc:"Right inguinal orchidopexy",
+  cond:"Right undescended testis",parName:"Linh Nguyen",parEmail:"parent@example.com"};
 function clearPatient(){
   FIELDS.forEach(function(k){if(KEEP.indexOf(k)<0)$(k).value=""});
   $("labelText").value="";$("sexU").checked=true;$("dt").value=todayIso();$("tm").value=nowTime();

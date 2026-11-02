@@ -62,11 +62,12 @@
     if (d.proc) { add("dt", ausDate(d.dt)); add("tm", d.tm); }
     add("interp", d.interp);
     add("pt", [d.giv, d.fam ? titleCase(d.fam) : ""].filter(Boolean).join(" "));
-    add("cond", d.cond); add("proc3", d.proc2);
+    add("cond", d.cond); add("proc3", d.proc);
     var ticks = [];
     if (d.sex === "M") ticks.push("male"); if (d.sex === "F") ticks.push("female");
     var ab = ageBox(d.dob, d.dt); if (d.tickAge && ab) ticks.push(ab);
-    return { text: out, ticks: ticks, procOver: w.over };
+    var p3 = out.filter(function (o) { return o.k === "proc3"; })[0];
+    return { text: out, ticks: ticks, procOver: w.over || !!(p3 && p3.over), procLineOver: !!(p3 && p3.over) };
   }
 
   function sigBox(aspect) {

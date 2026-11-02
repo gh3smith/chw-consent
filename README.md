@@ -35,7 +35,7 @@ The iPhone needs to load the app once from an **https://** address. After that i
 2. **Label:** for the name, date of birth, sex and AMO, tap the *Label text* box, tap it again and choose **Scan Text** (on iOS 17 and later it may be under **AutoFill**). Point at the label and tap **Insert**. The app fills family name, given name, MRN, date of birth, sex and the AMO (read from `AMO: LASTNAME, Firstname` and printed as "Dr Firstname Lastname" in the form's M.O. box; it also fills the practitioner name if that is empty). The address is not used. Check every field against the label.
    - No Scan Text? Check Settings → General → Language & Region → **Live Text** is on (needs iPhone XS/XR or newer, iOS 15+).
    - Or open the **Camera** app, point at the label, tap the Live Text button, **Select All → Copy**, then tap **Paste** in the app.
-3. **Procedure:** enter it in full, without abbreviations, plus the condition and the date of the operation.
+3. **Procedure:** enter it once, in full and without abbreviations; it prints in both the practitioner and parent sections. Add the condition. The date of the operation is optional.
 4. **Sign** with your finger. Open *Preview the form* to check it.
 5. **Send:** tap *Email parent with PDF*, choose Mail or Outlook, and paste the address (Copy button) if it isn't filled in. Repeat for admissions.
 6. Tap **New patient** to clear everything before the next patient.
