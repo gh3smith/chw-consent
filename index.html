@@ -124,10 +124,11 @@ details.preview[open] summary::after{content:"Hide"}
   <!-- 1 PATIENT -->
   <section class="card" aria-labelledby="h1">
     <h2 id="h1"><span class="n">1</span>Patient label</h2>
-    <p class="sub">Tap the box below, choose <b>Scan Text</b> (the camera icon above the keyboard) and point the camera at the label. Tap Insert, and the details fill in.</p>
+    <p class="sub">Tap the box, then tap it again and choose <b>Scan Text</b> (on newer iPhones it is under <b>AutoFill</b>). Point at the label and tap <b>Insert</b>. Or copy the label text with Live Text in the Camera app and tap <b>Paste</b>.</p>
     <div class="f">
       <label class="lbl" for="labelText">Label text</label>
-      <textarea id="labelText" class="scanbox" rows="4" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here, then Scan Text"></textarea>
+      <textarea id="labelText" class="scanbox" rows="4" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here twice, then Scan Text"></textarea>
+      <div class="row"><button class="btn sm" id="pasteLabel" type="button">Paste</button><button class="btn sm" id="clearLabel" type="button">Clear text</button></div>
       <span class="hint" id="parseHint">Nothing leaves this phone. Check every field against the label.</span>
     </div>
     <div class="grid">
@@ -235,6 +236,12 @@ function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;
 /* ---------- label text ---------- */
 var parseTimer=null;
 $("labelText").addEventListener("input",function(){clearTimeout(parseTimer);parseTimer=setTimeout(applyLabel,350)});
+$("pasteLabel").addEventListener("click",function(){
+  if(!navigator.clipboard||!navigator.clipboard.readText){$("parseHint").className="hint warn";$("parseHint").textContent="Touch and hold the box, then tap Paste.";$("labelText").focus();return}
+  navigator.clipboard.readText().then(function(t){if(!t||!t.trim()){$("parseHint").className="hint warn";$("parseHint").textContent="Nothing copied yet. Copy the label text first.";return}$("labelText").value=t;applyLabel()})
+    .catch(function(){$("parseHint").className="hint warn";$("parseHint").textContent="Touch and hold the box, then tap Paste.";$("labelText").focus()});
+});
+$("clearLabel").addEventListener("click",function(){$("labelText").value="";$("labelText").focus()});
 function applyLabel(){
   var t=$("labelText").value;if(!t.trim())return;
   var r=C.parseLabel(t),got=[];
