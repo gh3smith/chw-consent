@@ -65,6 +65,7 @@ main .gut{padding-block:14px calc(32px + env(safe-area-inset-bottom,0px));displa
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.sm{padding:7px 12px;min-height:36px;font-size:14px;border-radius:9px}
 .btn:disabled{opacity:.45}
+.btn.notready{opacity:.6}
 .btn.block{width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 10px 10px 0;font-size:15px}
@@ -193,6 +194,7 @@ details.preview[open] summary::after{content:"Hide"}
   <section class="card" aria-labelledby="h4">
     <h2 id="h4"><span class="n">4</span>Send</h2>
     <div class="checks" id="checks"></div>
+    <p class="hint warn" id="stillNeeded" style="margin:0"></p>
     <div class="grid">
       <div class="f s2"><label class="lbl" for="parName">Parent or guardian</label><input id="parName" type="text" autocapitalize="words"></div>
       <div class="f s2"><label class="lbl" for="parEmail">Parent email</label><input id="parEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off"></div>
@@ -411,7 +413,15 @@ img.addEventListener("load",drawPreview);
 /* ---------- checks, hints, emails ---------- */
 function abbrevs(t){var m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return m.filter(function(x,i){return m.indexOf(x)===i&&["NSW","CHW","SCHN","MRN","DOB"].indexOf(x)<0})}
 function longDate(iso){if(!iso)return"[date of operation]";return new Date(iso+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
-var mails={};
+var mails={},missing=[];
+function blockIfMissing(){
+  if(!missing.length)return false;
+  var st=$("sendStatus"),first=missing[0];
+  st.textContent="Before sending, add: "+missing.map(function(n){return n[0]}).join(", ")+".";
+  if(first[0]==="Blank form loaded"){st.textContent="The blank form hasn't loaded. Open the app once with signal, then try again.";return true}
+  var el=$(first[2]);if(el){el.scrollIntoView({behavior:"smooth",block:"center"});if(el.focus&&el.tagName!=="DIV")setTimeout(function(){el.focus({preventScroll:true})},350)}
+  return true;
+}
 function update(){
   var d=data(),a=C.ageOn(d.dob,d.dt),ab=C.ageBox(d.dob,d.dt);
   $("ageHint").textContent=a===null||isNaN(a)?"":a+" years";
@@ -421,10 +431,12 @@ function update(){
   $("procHint").textContent=!d.proc?"Fills two lines on the form.":lay.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?"Possible abbreviations: "+ab1.join(", ")+". Write them in full.":"Fits on the form.";
   var condOver=lay.text.some(function(t){return t.k==="cond"&&t.over});
   $("condHint").textContent=condOver?"Too long for the line. Shorten it.":"";
-  var need=[["Patient name",d.fam&&d.giv],["MRN",d.mrn],["Date of birth",d.dob],["Practitioner",d.prac],["Procedure",d.proc&&!lay.procOver],["Condition",d.cond],["Parent-section procedure",d.proc2],["Operation date",d.surg],["Signature",strokes.length>0],["Blank form loaded",!!templateBytes]];
+  var need=[["Patient name",d.fam&&d.giv,d.fam?"giv":"fam"],["MRN",d.mrn,"mrn"],["Date of birth",d.dob,"dob"],["Practitioner",d.prac,"prac"],["Procedure",d.proc&&!lay.procOver,"proc"],["Condition",d.cond,"cond"],["Parent-section procedure",d.proc2,"proc2"],["Operation date",d.surg,"surg"],["Signature",strokes.length>0,"pad"],["Blank form loaded",!!templateBytes,""]];
   $("checks").innerHTML=need.map(function(n){return '<div><span class="dot '+(n[1]?"ok":"")+'"></span>'+n[0]+"</div>"}).join("");
   var ok=need.every(function(n){return n[1]});
-  document.querySelectorAll(".send,#savePdf").forEach(function(b){b.disabled=!ok});
+  missing=need.filter(function(n){return !n[1]});
+  document.querySelectorAll(".send,#savePdf").forEach(function(b){b.classList.toggle("notready",!ok)});
+  $("stillNeeded").textContent=ok?"":"Still needed: "+missing.map(function(n){return n[0]}).join(", ")+".";
   buildMails(d);drawPreview();
   if(ok)schedulePdf();else{ready.file=null;ready.key=""}
 }
@@ -452,6 +464,7 @@ function makePdf(){
 }
 function canShareFile(f){try{return !!(navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
 function shareMail(k){
+  if(blockIfMissing())return;
   var f=ready.file,st=$("sendStatus");
   if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
   var m=mails[k];
@@ -467,6 +480,7 @@ function shareMail(k){
 function downloadFile(f){var u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},4000)}
 document.querySelectorAll("[data-send]").forEach(function(b){b.addEventListener("click",function(){shareMail(b.getAttribute("data-send"))})});
 $("savePdf").addEventListener("click",function(){
+  if(blockIfMissing())return;
   var f=ready.file,st=$("sendStatus");
   if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
   if(canShareFile(f)){navigator.share({files:[f]}).then(function(){st.textContent="Saved or shared "+f.name+"."}).catch(function(e){st.textContent=e&&e.name==="AbortError"?"Cancelled.":"Couldn't open the share sheet."})}
