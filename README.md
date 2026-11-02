@@ -37,7 +37,7 @@ The iPhone needs to load the app once from an **https://** address. After that i
    - Or open the **Camera** app, point at the label, tap the Live Text button, **Select All → Copy**, then tap **Paste** in the app.
 3. **Procedure:** enter the *Practitioner name sending RFA*, then the procedure once, in full and without abbreviations; it prints in both the practitioner and parent sections. Add the condition. The date of the operation is optional.
 4. **Sign** with your finger. Open *Preview the form* to check it.
-5. **Send:** tap **1. Save PDF to Files** and choose *Save to Files*. Then tap **Email parent and admissions**: Mail opens with the parent in To, admissions in Cc, the subject "Consent form" and the message filled in. Tap in the message, tap the document icon above the keyboard, and attach the PDF from Recents.
+5. **Send:** tap **Send with Outlook (PDF attached)** and choose **Outlook** in the share sheet. The PDF is attached straight from the app and nothing is saved on the phone. Both addresses are copied: paste them into To (move admissions to Cc if you like), type the subject **Consent form**, check and send.
 6. Tap **New patient** to clear everything before the next patient.
 
 ## Checking before clinical use

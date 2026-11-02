@@ -202,20 +202,24 @@ details.preview[open] summary::after{content:"Hide"}
       <div class="f full"><label class="lbl" for="admEmail">Admissions email</label><input id="admEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="Remembered on this phone"></div>
     </div>
 
-    <button class="btn primary block" id="savePdf" type="button">1. Save PDF to Files</button>
-    <p class="hint" style="margin:0">Choose <b>Save to Files</b> in the share sheet. Do this once per patient.</p>
 
     <div class="mail">
-      <span class="lbl">2. Email the parent, copying admissions</span>
+      <span class="lbl">Email the parent, copying admissions</span>
       <div class="kv"><span class="lbl">To</span><span class="v" id="m1to"></span><button class="btn sm" data-copy="1to" type="button">Copy</button></div>
       <div class="kv"><span class="lbl">Cc</span><span class="v" id="m1cc"></span><button class="btn sm" data-copy="1cc" type="button">Copy</button></div>
       <div class="kv"><span class="lbl">Subject</span><span class="v" id="m1sub"></span><button class="btn sm" data-copy="1sub" type="button">Copy</button></div>
       <details><summary>Show message</summary><pre id="m1body"></pre></details>
-      <button class="btn primary block send" data-mailto="1" type="button">Email parent and admissions</button>
-      <button class="btn sm send" data-send="1" type="button">Or share the PDF straight to an app</button>
+      <button class="btn primary block send" data-send="1" type="button">Send with Outlook (PDF attached)</button>
+      <p class="hint" style="margin:0">Opens the share sheet: choose <b>Outlook</b>. Both addresses are copied, so paste them into To (move admissions to Cc if you like) and type the subject <b>Consent form</b>. Nothing is saved on the phone.</p>
     </div>
     <p class="status" id="sendStatus" aria-live="polite"></p>
-    <div class="note"><p><b>3. Attach the form in Mail.</b> iPhone doesn't let an app add the attachment for you. In the new email, tap in the message, tap the <b>document icon</b> above the keyboard (or <b>&lt;</b> first, then the document icon), open <b>Recents</b> and choose <span class="mono" id="attachName">the PDF</span>. Then send. Use your NSW Health account only.</p></div>  </section>
+    <details class="mail"><summary>Other ways to send</summary>
+      <div style="display:grid;gap:8px;margin-top:8px">
+        <button class="btn block send" data-mailto="1" type="button">Open an email with addresses and subject filled in</button>
+        <p class="hint" style="margin:0">iPhone won't let this add the PDF, so you'd attach it yourself from a saved copy (<span class="mono" id="attachName">the PDF</span>).</p>
+        <button class="btn block" id="savePdf" type="button">Save or share the PDF</button>
+      </div>
+    </details>  </section>
 
   <p class="foot" style="text-align:center">Patient details stay on this phone and are cleared with New patient. <a href="#" id="loadExample" style="color:var(--accent)">Try with an example patient</a></p>
 </div></main>
@@ -463,18 +467,19 @@ function openMail(k){
   if(blockIfMissing())return;
   var m=mails[k],st=$("sendStatus");
   var href="mailto:"+encodeURIComponent(m.to||"").replace(/%40/g,"@")+"?"+(m.cc?"cc="+encodeURIComponent(m.cc).replace(/%40/g,"@")+"&":"")+"subject="+encodeURIComponent(m.sub)+"&body="+encodeURIComponent(m.body);
-  st.textContent="Opening Mail. Now attach "+fileName(data())+" (step 3 below).";
+  st.textContent="Opening your mail app. Attach "+fileName(data())+" before sending.";
   window.location.href=href;
 }
 document.querySelectorAll("[data-mailto]").forEach(function(b){b.addEventListener("click",function(){openMail(b.getAttribute("data-mailto"))})});
 function shareMail(k){
   if(blockIfMissing())return;
-  if(mails[k].to&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(mails[k].to).catch(function(){})}catch(e){}}
+  var addrs=[mails[k].to,mails[k].cc].filter(Boolean).join("; ");
+  if(addrs&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(addrs).catch(function(){})}catch(e){}}
   var f=ready.file,st=$("sendStatus");
   if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
   var m=mails[k];
   if(canShareFile(f)){
-    navigator.share({files:[f],title:m.sub,text:m.body}).then(function(){st.textContent="Shared. In Mail, paste the parent's address into To (it was copied), add admissions in Cc, and type the subject Consent form."})
+    navigator.share({files:[f],title:m.sub,text:m.body}).then(function(){st.textContent="Sent to the share sheet. In Outlook, paste the addresses (copied), type the subject Consent form, check and send."})
       .catch(function(e){st.textContent=e&&e.name==="AbortError"?"Cancelled.":"Sharing didn't work here. Use Save PDF to Files, then attach it in Mail."});
   }else{
     downloadFile(f);
