@@ -1,0 +1,465 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CHW Consent Prefill v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header; on wide screens the four working sections sit left and a live preview of the real SCN020.001 form sits right; one column on phones */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --sunk:#E3E9EC; --ink:#122433; --muted:#53687A; --line:#C9D4DB;
+  --accent:#0F6E78; --accent-ink:#FFFFFF; --accent-soft:#D6ECEE;
+  --ok:#1F7A4A; --ok-soft:#DDF1E5; --warn:#9A5A00; --warn-soft:#FBEBD2; --bad:#B23A3A; --bad-soft:#F6DEDE;
+  --bar:#122433; --bar-ink:#F1F5F7; --bar-muted:#9FB3C2;
+  --paper:#FFFFFF; --pen:#12245E;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-label:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E171E; --surface:#16222B; --sunk:#1D2C37; --ink:#E4ECF1; --muted:#93A8B8; --line:#2C3E4B;
+  --accent:#4CB8C2; --accent-ink:#06191C; --accent-soft:#163A40;
+  --ok:#5CCB8E; --ok-soft:#173527; --warn:#E3A44A; --warn-soft:#3A2A12; --bad:#EE8080; --bad-soft:#3E1D1D;
+  --bar:#060D12; --bar-ink:#E4ECF1; --bar-muted:#7F95A5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E171E; --surface:#16222B; --sunk:#1D2C37; --ink:#E4ECF1; --muted:#93A8B8; --line:#2C3E4B;
+  --accent:#4CB8C2; --accent-ink:#06191C; --accent-soft:#163A40;
+  --ok:#5CCB8E; --ok-soft:#173527; --warn:#E3A44A; --warn-soft:#3A2A12; --bad:#EE8080; --bad-soft:#3E1D1D;
+  --bar:#060D12; --bar-ink:#E4ECF1; --bar-muted:#7F95A5; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}
+h1,h2{text-wrap:balance;margin:0;line-height:1.2}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lbl{font:600 12px/1.2 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+header{background:var(--bar);color:var(--bar-ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:9}
+header .gut{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:10px}
+.brand{font:600 16px var(--f-label);letter-spacing:.03em}
+.brand small{display:block;font:500 11px var(--f-label);color:var(--bar-muted);letter-spacing:.08em;text-transform:uppercase}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.hbtn{background:transparent;border:1px solid var(--bar-muted);color:var(--bar-ink);padding:6px 12px;border-radius:6px;cursor:pointer;font:600 13px var(--f-label);letter-spacing:.04em}
+
+main .gut{padding-block:20px 64px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px);gap:24px;align-items:start}
+.col{display:grid;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;min-width:0}
+.card h2{font-size:20px;display:flex;gap:10px;align-items:center}
+.card h2 .n{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-grid;place-items:center;font:600 14px var(--f-label);flex:none}
+.card .sub{color:var(--muted);margin:6px 0 16px;max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 14px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:1/-1}
+.f{display:grid;gap:5px;min-width:0}
+.f input,.f select,.f textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+.f textarea{min-height:70px;resize:vertical}
+.f .hint{font-size:13px;color:var(--muted)}
+.f .hint.warn{color:var(--warn)}
+.mono{font-family:var(--f-mono)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{padding:6px 12px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;font-size:15px}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note.bad{border-color:var(--bad);background:var(--bad-soft)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p{margin:0}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font:600 12px var(--f-label);letter-spacing:.03em}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.n{background:var(--sunk);color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg label{padding:8px 14px;cursor:pointer;border-right:1px solid var(--line);background:var(--bg)}
+.seg label:last-child{border-right:0}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-ink);font-weight:700}
+
+/* signature */
+.pad{position:relative;background:var(--paper);border:1.5px dashed var(--line);border-radius:10px;height:160px;touch-action:none}
+.pad canvas{width:100%;height:100%;display:block;cursor:crosshair;border-radius:10px}
+.pad .base{position:absolute;left:20px;right:20px;bottom:38px;border-bottom:1px solid #8A9AA6;pointer-events:none}
+.pad .x{position:absolute;left:20px;bottom:42px;color:#8A9AA6;font:700 18px var(--f-label);pointer-events:none}
+.pad .ph{position:absolute;inset:0;display:grid;place-items:center;color:#8A9AA6;pointer-events:none;font-size:15px}
+
+/* preview */
+.preview{position:sticky;top:76px;display:grid;gap:10px}
+.sheet{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;box-shadow:0 2px 14px rgba(18,36,51,.12)}
+.sheet canvas{display:block;width:100%;height:auto}
+.checks{display:grid;gap:4px;font-size:14px}
+.checks div{display:flex;gap:8px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.dot.ok{background:var(--ok)}
+
+/* emails */
+.mails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mail{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:14px;display:grid;gap:8px;min-width:0}
+.mail .to{font-size:14px;word-break:break-all}
+.mail pre{white-space:pre-wrap;font:14px/1.5 var(--f-body);margin:0;max-height:260px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.status{font-size:14px;color:var(--muted);min-height:1.4em}
+.example{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+@media (max-width:1020px){.layout{grid-template-columns:1fr}.preview{position:static}}
+@media (max-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.s2,.s3,.s4{grid-column:1/-1}.mails{grid-template-columns:1fr}.card{padding:16px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header>
+  <div class="gut">
+    <div class="brand">CHW Consent Prefill · Version 2<small>SCN020.001 Request/Consent for Medical Procedure Treatment</small></div>
+    <div class="hdr-actions"><button class="hbtn" id="clearAll" type="button">Clear for next patient</button></div>
+  </div>
+</header>
+
+<main><div class="gut">
+<div class="layout">
+<div class="col">
+
+  <div class="note warn example" id="exampleNote"><p><b>Example patient filled in.</b> These are not real details. Clear before using with a patient.</p></div>
+
+  <!-- 1 PATIENT -->
+  <section class="card" aria-labelledby="h1">
+    <h2 id="h1"><span class="n">1</span>Patient label</h2>
+    <p class="sub">Photograph the patient's address label and the details are read into the form. Check every field against the label before going on.</p>
+    <div class="row">
+      <label class="btn primary" for="labelPhoto" id="photoBtn">Photograph label</label>
+      <input type="file" id="labelPhoto" accept="image/*" capture="environment" hidden>
+      <span class="status" id="ocrStatus"></span>
+    </div>
+    <p class="lbl" id="privacyNote" style="margin:10px 0 16px;text-transform:none;letter-spacing:0;font-size:13px">The photo is sent to Claude to read the text. Confirm this is allowed under SCHN privacy policy before using real labels. You can always type the details instead.</p>
+    <div class="grid">
+      <div class="f s3"><label class="lbl" for="fam">Family name</label><input id="fam" type="text" autocomplete="off"></div>
+      <div class="f s3"><label class="lbl" for="giv">Given name</label><input id="giv" type="text" autocomplete="off"></div>
+      <div class="f s2"><label class="lbl" for="mrn">MRN</label><input id="mrn" type="text" class="mono" autocomplete="off"><span class="hint" id="mrnHint"></span></div>
+      <div class="f s2"><label class="lbl" for="dob">Date of birth</label><input id="dob" type="date"><span class="hint" id="ageHint"></span></div>
+      <div class="f s2"><span class="lbl">Sex</span>
+        <div class="seg" role="radiogroup" aria-label="Sex">
+          <label><input type="radio" name="sex" value="M" id="sexM">Male</label>
+          <label><input type="radio" name="sex" value="F" id="sexF">Female</label>
+          <label><input type="radio" name="sex" value="" id="sexU">Not stated</label>
+        </div></div>
+      <div class="f s4"><label class="lbl" for="a1">Address</label><input id="a1" type="text" autocomplete="off"></div>
+      <div class="f s2"><label class="lbl" for="mo">M.O.</label><input id="mo" type="text" autocomplete="off"></div>
+      <div class="f s4"><label class="lbl" for="a2">Suburb, state, postcode</label><input id="a2" type="text" autocomplete="off"></div>
+      <div class="f s2"><label class="lbl" for="ward">Location / ward</label><input id="ward" type="text" autocomplete="off"></div>
+    </div>
+  </section>
+
+  <!-- 2 PROCEDURE -->
+  <section class="card" aria-labelledby="h2">
+    <h2 id="h2"><span class="n">2</span>Procedure</h2>
+    <p class="sub">Fills the practitioner section and the procedure lines of the parent section. The form asks for no abbreviations.</p>
+    <div class="grid">
+      <div class="f s3"><label class="lbl" for="prac">Practitioner name</label><input id="prac" type="text" autocomplete="off"></div>
+      <div class="f s3"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
+      <div class="f s6"><label class="lbl" for="proc">Procedure or treatment, and reasons</label><textarea id="proc"></textarea><span class="hint" id="procHint"></span></div>
+      <div class="f s6"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint" id="condHint"></span></div>
+      <div class="f s6"><label class="lbl" for="proc2">Procedure, as written in the parent section</label><input id="proc2" type="text"><span class="hint" id="proc2Hint">Short name of the operation, e.g. Right inguinal orchidopexy.</span></div>
+      <div class="f s2"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
+      <div class="f s2"><label class="lbl" for="tm">Time</label><input id="tm" type="time"></div>
+      <div class="f s2"><label class="lbl" for="surg">Date of operation</label><input id="surg" type="date"></div>
+      <div class="f s3"><label class="lbl" for="interp">Interpreter present (name)</label><input id="interp" type="text" placeholder="Leave blank if none"></div>
+      <div class="f s3"><span class="lbl">Patient age box</span>
+        <label style="display:flex;gap:8px;align-items:center;padding-top:6px"><input type="checkbox" id="tickAge" checked style="width:20px;height:20px;accent-color:var(--accent)"><span id="ageBoxText">Tick from date of birth</span></label></div>
+    </div>
+  </section>
+
+  <!-- 3 SIGN -->
+  <section class="card" aria-labelledby="h3">
+    <h2 id="h3"><span class="n">3</span>Practitioner signature</h2>
+    <p class="sub">Sign with a finger or stylus. The parent signs their section on the printed copy.</p>
+    <div class="pad" id="pad"><canvas id="sig" aria-label="Signature pad"></canvas><span class="x">×</span><span class="base"></span><span class="ph" id="sigPh">Sign here</span></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="sigClear" type="button">Clear signature</button></div>
+  </section>
+
+  <!-- 4 SEND -->
+  <section class="card" aria-labelledby="h4">
+    <h2 id="h4"><span class="n">4</span>Email the form</h2>
+    <p class="sub">The filled PDF is never saved to this device. It opens straight into a new email as an attachment. Copy both addresses first, then paste them into the To line.</p>
+    <div class="grid">
+      <div class="f s2"><label class="lbl" for="parName">Parent or guardian</label><input id="parName" type="text"></div>
+      <div class="f s2"><label class="lbl" for="parEmail">Parent email</label><input id="parEmail" type="email" inputmode="email"></div>
+      <div class="f s2"><label class="lbl" for="admEmail">Admissions email</label><input id="admEmail" type="email" inputmode="email"></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="copyAddr" type="button">Copy both email addresses</button>
+      <button class="btn primary" id="emailPdf" type="button" disabled>Attach PDF to email</button>
+    </div>
+    <div class="status" id="sendStatus" style="margin-top:8px"></div>
+    <div class="mail" style="margin-top:12px">
+      <span class="lbl">Email</span>
+      <div class="to" id="mto"></div>
+      <div><b id="msub"></b></div>
+      <pre id="mbody"></pre>
+    </div>
+    <p class="lbl" style="margin-top:14px;text-transform:none;letter-spacing:0;font-size:13px">Send from your NSW Health account only. Emailing a consent form to a family's personal address should be covered by local policy.</p>
+  </section>
+</div>
+
+<!-- PREVIEW -->
+<aside class="preview" aria-label="Form preview">
+  <div class="sheet"><canvas id="pv" width="1192" height="1692" aria-label="Preview of the filled consent form"></canvas></div>
+  <div class="card" style="padding:16px">
+    <span class="lbl">Ready to email</span>
+    <div class="checks" id="checks" style="margin-top:8px"></div>
+  </div>
+</aside>
+</div>
+</div></main>
+
+<img id="formImg" src="../form-preview.jpg" alt="" hidden>
+<script src="../pdf-lib.min.js"></script>
+<script>
+(function(){
+const $=s=>document.getElementById(s);
+const PAGE_H=845.64, SCALE=1192/595.8;
+/* Positions on SCN020.001, in points from the top-left; y is the text baseline */
+const L={
+ fam:{x:343,y:18,w:127},giv:{x:337,y:36,w:128},mrn:{x:491,y:18,w:70},
+ dd:{x:316,y:55,w:26},mm:{x:348,y:55,w:26},yy:{x:379,y:55,w:38},mo:{x:437,y:55,w:125},
+ a1:{x:327,y:75,w:238},a2:{x:293,y:94,w:272},ward:{x:357,y:113,w:208},fac:{x:107,y:64,w:178},
+ prac1:{x:79,y:153,w:178},proc1:{x:62,y:188,w:508},proc2l:{x:62,y:208,w:508},
+ pracPrint:{x:62,y:225,w:212},dt:{x:457,y:225,w:48},tm:{x:517,y:225,w:42},interp:{x:151,y:247,w:130},
+ prac2:{x:62,y:283,w:205},pt:{x:354,y:283,w:210},cond:{x:62,y:308,w:508},proc3:{x:62,y:334,w:508},
+ sig:{x:281,y:207,w:170,h:21},
+ male:{x:470.6,y:35.3},female:{x:513.8,y:35.3},u14:{x:112.6,y:467.3},a14:{x:180.5,y:467.3},a16:{x:240,y:467.3}
+};
+const FS=9, FS_MIN=6.5;
+let font=null, img=$("formImg"), templateBytes=null;
+const strokes=[]; let sigPng=null;
+
+const EXAMPLE={fam:"NGUYEN",giv:"Oliver",mrn:"0000-4417",dob:"2022-03-14",sex:"M",a1:"12 Example Street",a2:"WESTMEAD NSW 2145",mo:"Medicare 0000 00000 0",ward:"Urology Clinic",
+ prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
+ cond:"Right undescended testis",proc2:"Right inguinal orchidopexy",parName:"Linh Nguyen",parEmail:"parent@example.com"};
+
+/* ---------- text helpers ---------- */
+function winAnsi(s){return String(s||"").replace(/[đĐ]/g,c=>c==="đ"?"d":"D").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/[^\x20-\x7E\xA0-\xFF]/g,"?")}
+const width=(t,s)=>font?font.widthOfTextAtSize(t,s):t.length*s*0.5;
+function fit(t,w){let s=FS;while(s>FS_MIN&&width(t,s)>w)s-=0.25;return {s,over:width(t,s)>w}}
+function wrap2(t,w){ // split into up to 2 lines, shrinking font if needed
+  t=winAnsi(t).replace(/\s+/g," ").trim();if(!t)return{lines:["",""],s:FS,over:false};
+  for(let s=FS;s>=FS_MIN;s-=0.25){const words=t.split(" ");const lines=[""];for(const wd of words){const cur=lines[lines.length-1];const tryL=cur?cur+" "+wd:wd;if(width(tryL,s)<=w)lines[lines.length-1]=tryL;else{lines.push(wd)}}
+    if(lines.length<=2&&lines.every(l=>width(l,s)<=w))return{lines:[lines[0],lines[1]||""],s,over:false}}
+  return{lines:[t,""],s:FS_MIN,over:true};
+}
+function abbrevs(t){const m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return [...new Set(m.filter(x=>!["NSW","CHW","SCHN","MRN","DOB"].includes(x)))]}
+
+/* ---------- state from inputs ---------- */
+const ids=["fam","giv","mrn","dob","a1","a2","mo","ward","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
+function val(id){return $(id).value.trim()}
+function sex(){const r=document.querySelector('input[name=sex]:checked');return r?r.value:""}
+function age(){const d=val("dob");if(!d)return null;const b=new Date(d+"T00:00:00"),ref=val("dt")?new Date(val("dt")+"T00:00:00"):new Date();let a=ref.getFullYear()-b.getFullYear();if(ref<new Date(ref.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
+function ageBox(){const a=age();if(a===null)return null;return a<14?"u14":a<16?"a14":"a16"}
+const ausDate=d=>{if(!d)return"";const[y,m,dd]=d.split("-");return `${dd}/${m}/${y}`};
+const titleCase=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+function patientName(){return [val("giv"),val("fam")?titleCase(val("fam")):""].filter(Boolean).join(" ")}
+
+/* Everything that gets written onto the form, as one list both renderers share */
+function items(){
+  const out=[];const add=(k,t)=>{t=winAnsi(t);if(!t)return;const f=fit(t,L[k].w);out.push({k,t,x:L[k].x,y:L[k].y,s:f.s,over:f.over})};
+  add("fam",val("fam").toUpperCase());add("giv",val("giv"));add("mrn",val("mrn"));
+  const d=val("dob");if(d){const[y,m,dd]=d.split("-");add("dd",dd);add("mm",m);add("yy",y)}
+  add("mo",val("mo"));add("a1",val("a1"));add("a2",val("a2"));add("ward",val("ward"));add("fac",val("fac"));
+  add("prac1",val("prac"));add("pracPrint",val("prac"));add("prac2",val("prac"));
+  const w=wrap2(val("proc"),L.proc1.w);if(w.lines[0])out.push({k:"proc1",t:w.lines[0],x:L.proc1.x,y:L.proc1.y,s:w.s,over:w.over});if(w.lines[1])out.push({k:"proc2l",t:w.lines[1],x:L.proc2l.x,y:L.proc2l.y,s:w.s,over:false});
+  if(val("proc")){add("dt",ausDate(val("dt")));add("tm",val("tm"))}
+  add("interp",val("interp"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc2"));
+  const ticks=[];const sx=sex();if(sx==="M")ticks.push("male");if(sx==="F")ticks.push("female");
+  const ab=ageBox();if($("tickAge").checked&&ab)ticks.push(ab);
+  return{text:out,ticks,procOver:w.over};
+}
+
+/* ---------- preview ---------- */
+const pv=$("pv"),pctx=pv.getContext("2d");
+function drawPreview(){
+  pctx.fillStyle="#fff";pctx.fillRect(0,0,pv.width,pv.height);
+  if(img.complete&&img.naturalWidth)pctx.drawImage(img,0,0,pv.width,pv.height);
+  const it=items();pctx.fillStyle="#12245E";pctx.textBaseline="alphabetic";
+  for(const t of it.text){pctx.font=`${t.s*SCALE}px Helvetica, Arial, sans-serif`;pctx.fillText(t.t,t.x*SCALE,t.y*SCALE)}
+  pctx.font=`bold ${9*SCALE}px Helvetica, Arial, sans-serif`;pctx.textAlign="center";
+  for(const k of it.ticks)pctx.fillText("X",L[k].x*SCALE,(L[k].y+3.2)*SCALE);
+  pctx.textAlign="left";
+  if(sigPng&&sigImgEl.complete){const b=sigBox();pctx.drawImage(sigImgEl,b.x*SCALE,b.top*SCALE,b.w*SCALE,b.h*SCALE)}
+}
+const sigImgEl=new Image();sigImgEl.onload=drawPreview;
+function sigBox(){ // fit trimmed signature into the signature line, keep aspect
+  const r=sigAspect||3;let w=L.sig.w,h=w/r;if(h>L.sig.h){h=L.sig.h;w=h*r}
+  return{x:L.sig.x+(L.sig.w-w)/2,top:L.sig.y+(L.sig.h-h),w,h};
+}
+
+/* ---------- checks & hints ---------- */
+function update(){
+  const a=age(),ab=ageBox();
+  $("ageHint").textContent=a===null?"":`${a} years`;
+  $("ageBoxText").textContent=ab?`Tick "${{u14:"Under 14 years",a14:"14 – 16 years",a16:"16 years and over"}[ab]}"`:"Tick from date of birth";
+  const it=items();
+  const ab1=abbrevs(val("proc")+" "+val("proc2")+" "+val("cond"));
+  $("procHint").className="hint"+(it.procOver||ab1.length?" warn":"");
+  $("procHint").textContent=it.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits on the form's two lines.";
+  const overs=it.text.filter(t=>t.over&&t.k!=="proc1").map(t=>t.k);
+  $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
+  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure and reasons",val("proc")&&!it.procOver],["Condition",val("cond")],["Procedure for parent section",val("proc2")],["Date of operation",val("surg")],["Practitioner signature",strokes.length>0]];
+  $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
+  const ready=need.every(n=>n[1])&&templateBytes&&font;
+  $("emailPdf").disabled=!ready;
+  emails();drawPreview();
+}
+
+/* ---------- emails ---------- */
+function longDate(d){if(!d)return"[date of operation]";return new Date(d+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+function emails(){
+  const child=val("giv")||"your child",pn=patientName()||"[patient]",par=val("parName")?val("parName").split(" ")[0]:"",op=val("proc2")||"[procedure]",sd=longDate(val("surg"));
+  const m1s=`Consent form for ${child}'s operation on ${sd}`;
+  const m1b=`Dear ${par||"Parent or guardian"},
+
+Attached is the consent form for ${child}'s operation (${op}) at The Children's Hospital at Westmead on ${sd}.
+
+Please:
+1. Print the form (one page).
+2. Read it, and in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, then print your name and sign.
+3. Bring the signed form with you on the day of the operation.
+
+${val("prac")||"The surgeon"} has already filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.
+
+If you can't print the form, let the nurses know when you arrive and a copy will be ready for you.
+
+Kind regards,
+${val("prac")||"[Practitioner]"}
+Department of Paediatric Surgery and Urology
+The Children's Hospital at Westmead
+
+---
+For Admissions: please file this copy (SCN020.001, practitioner section completed and signed) for the admission.
+Patient: ${pn} · MRN ${val("mrn")} · DOB ${ausDate(val("dob"))}
+Procedure: ${op} · Date of operation: ${val("surg")?ausDate(val("surg")):""}`;
+  $("mto").innerHTML=`<span class="lbl">To</span> ${esc(addrs()||"no email addresses entered")}`;
+  $("msub").textContent=m1s;$("mbody").textContent=m1b;
+  emails.data={s:m1s,b:m1b};
+}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function addrs(){return [val("admEmail"),val("parEmail")].filter(Boolean).join("; ")}
+let stTimer=null;
+function status(t,keep){const s=$("sendStatus");s.textContent=t;clearTimeout(stTimer);if(!keep)stTimer=setTimeout(()=>s.textContent="",4000)}
+$("copyAddr").onclick=async()=>{
+  const txt=addrs();if(!txt){status("Enter the email addresses first.");return}
+  try{await navigator.clipboard.writeText(txt);status(`Copied: ${txt}`)}catch(e){
+    const r=document.createRange();r.selectNodeContents($("mto"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);status("Selected. Copy with your keyboard.")}
+};
+
+/* ---------- signature ---------- */
+const cv=$("sig"),cx=cv.getContext("2d");let sigAspect=3;
+function sizePad(){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);redrawPad()}
+function strokeAll(c,list,col,lw){c.strokeStyle=col;c.lineWidth=lw;c.lineCap="round";c.lineJoin="round";for(const s of list){c.beginPath();s.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));if(s.length===1)c.lineTo(s[0][0]+.1,s[0][1]);c.stroke()}}
+function redrawPad(){const r=cv.getBoundingClientRect();cx.clearRect(0,0,r.width,r.height);strokeAll(cx,strokes,"#12245E",2.4);$("sigPh").hidden=strokes.length>0}
+let cur=null;
+const pt=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);cur=[pt(e)];strokes.push(cur);$("sigPh").hidden=true});
+cv.addEventListener("pointermove",e=>{if(!cur)return;const p=pt(e),q=cur[cur.length-1];cur.push(p);cx.strokeStyle="#12245E";cx.lineWidth=2.4;cx.lineCap="round";cx.beginPath();cx.moveTo(q[0],q[1]);cx.lineTo(p[0],p[1]);cx.stroke()});
+const end=()=>{if(!cur)return;cur=null;exportSig();update()};
+cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+function exportSig(){
+  if(!strokes.length){sigPng=null;return}
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const s of strokes)for(const[x,y]of s){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+  const pad=4,w=Math.max(10,x1-x0+pad*2),h=Math.max(10,y1-y0+pad*2),k=3;
+  const o=document.createElement("canvas");o.width=w*k;o.height=h*k;const oc=o.getContext("2d");oc.scale(k,k);oc.translate(-x0+pad,-y0+pad);
+  strokeAll(oc,strokes,"#12245E",2.6);sigAspect=w/h;sigPng=o.toDataURL("image/png");sigImgEl.src=sigPng;
+}
+$("sigClear").onclick=()=>{strokes.length=0;sigPng=null;redrawPad();update()};
+
+/* ---------- PDF ---------- */
+async function buildPdf(){
+  const {PDFDocument,StandardFonts,rgb}=PDFLib;
+  const doc=await PDFDocument.load(templateBytes);const page=doc.getPages()[0];
+  const helv=await doc.embedFont(StandardFonts.Helvetica),bold=await doc.embedFont(StandardFonts.HelveticaBold);
+  const ink=rgb(0.07,0.14,0.37),it=items();
+  for(const t of it.text)page.drawText(t.t,{x:t.x,y:PAGE_H-t.y,size:t.s,font:helv,color:ink});
+  for(const k of it.ticks){const w=bold.widthOfTextAtSize("X",9);page.drawText("X",{x:L[k].x-w/2,y:PAGE_H-L[k].y-3.2,size:9,font:bold,color:ink})}
+  if(sigPng){const png=await doc.embedPng(sigPng);const b=sigBox();page.drawImage(png,{x:b.x,y:PAGE_H-b.top-b.h,width:b.w,height:b.h})}
+  doc.setTitle(`Consent ${val("fam").toUpperCase()} ${val("mrn")}`);doc.setSubject("SCN020.001 Request/Consent for Medical Procedure Treatment");doc.setProducer("CHW Consent Prefill");
+  return await doc.save();
+}
+function fileName(){const s=val("surg").replace(/-/g,"");return `Consent_${winAnsi(val("fam")).toUpperCase().replace(/[^A-Z0-9]+/g,"")}_${val("mrn").replace(/[^A-Za-z0-9]+/g,"")}_${s||"undated"}.pdf`}
+/* The PDF only leaves the page as an email attachment via the device's share sheet. It is never written to disk by this page. */
+$("emailPdf").onclick=async()=>{
+  status("Building PDF…",true);
+  let file;
+  try{const bytes=await buildPdf();file=new File([bytes],fileName(),{type:"application/pdf"})}
+  catch(e){status("Could not build the PDF. Check the details and try again.",true);return}
+  const m=emails.data,payload={files:[file],title:m.s,text:m.b};
+  const blocked="Attaching to email isn't possible in this viewer. Use Safari on iPhone/iPad or Microsoft Edge on Windows.";
+  if(!navigator.share||!navigator.canShare||!navigator.canShare({files:[file]})){status(blocked,true);return}
+  try{await navigator.share(payload);status("Handed to email. Choose Mail or Outlook, paste the addresses into To, and send.",true)}
+  catch(e){
+    if(e&&e.name==="AbortError")status("Email cancelled.");
+    else if(e&&e.name==="NotAllowedError")status(blocked,true);
+    else status("Could not open email. Try again.",true)}
+};
+
+/* ---------- label photo ---------- */
+let sample=null;
+$("labelPhoto").addEventListener("change",async e=>{
+  const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
+  const st=$("ocrStatus");$("mrnHint").textContent="";
+  let barcode="";
+  try{if("BarcodeDetector" in window){const bmp=await createImageBitmap(file);const codes=await new BarcodeDetector().detect(bmp);if(codes[0])barcode=codes[0].rawValue.trim()}}catch(_){}
+  if(!sample){st.textContent=barcode?`Barcode read: ${barcode}. Type the other details.`:"Label reading isn't available here. Type the details.";if(barcode)$("mrn").value=barcode;update();return}
+  st.textContent="Reading label…";$("photoBtn").setAttribute("aria-disabled","true");
+  try{
+    const r=await sample.json(`This photo shows a patient identification label from a NSW children's hospital. Read only what is printed on it.
+Reply with only this JSON object, using "" for anything not printed on the label (never guess):
+{"familyName":"","givenName":"","mrn":"","dob":"YYYY-MM-DD","sex":"M or F or empty","address1":"street line","address2":"suburb state postcode","mo":"medical officer or Medicare number if printed","ward":"location or ward if printed"}
+Australian dates are day/month/year.`,{images:file,cache:false});
+    const set=(id,v)=>{if(typeof v==="string"&&v.trim())$(id).value=v.trim()};
+    set("fam",r.familyName);set("giv",r.givenName?titleCase(r.givenName):"");set("mrn",r.mrn);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(r.dob||""))$("dob").value=r.dob;
+    set("a1",r.address1);set("a2",r.address2);set("mo",r.mo);set("ward",r.ward);
+    if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
+    $("exampleNote").hidden=true;
+    st.textContent="Label read. Check each field against the label.";
+    if(barcode&&r.mrn&&barcode.replace(/\D/g,"")!==String(r.mrn).replace(/\D/g,"")){$("mrnHint").className="hint warn";$("mrnHint").textContent=`Barcode reads ${barcode}. Check the MRN.`}
+    else if(barcode){$("mrnHint").className="hint";$("mrnHint").textContent="Matches the barcode."}
+  }catch(err){
+    const c=err&&err.code;
+    st.textContent=c==="not_granted"||c==="sampling_disabled"||c==="images_unavailable"?"Label reading is turned off. Type the details.":c==="rate_limited"?"Too many reads just now. Wait a moment, or type the details.":c==="image_rejected"?"That photo couldn't be used. Try a clearer photo.":"Couldn't read the label. Try a clearer photo, or type the details.";
+    if(c==="not_granted"||c==="sampling_disabled"||c==="images_unavailable"){$("photoBtn").hidden=true;$("privacyNote").hidden=true;sample=null}
+  }finally{$("photoBtn").removeAttribute("aria-disabled");update()}
+});
+
+/* ---------- setup ---------- */
+const store={get(k){try{return localStorage.getItem(k)||""}catch(_){return""}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
+function today(){const d=new Date();return d.toISOString().slice(0,10)}
+function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function loadExample(){for(const[k,v]of Object.entries(EXAMPLE)){if(k==="sex"){$(v==="M"?"sexM":"sexF").checked=true}else if($(k))$(k).value=v}
+  const d=new Date();d.setDate(d.getDate()+21);$("surg").value=d.toISOString().slice(0,10);$("exampleNote").hidden=false}
+function clearAll(){for(const id of ids){if(["prac","fac","admEmail","dt","tm"].includes(id))continue;$(id).value=""}
+  $("sexU").checked=true;$("prac").value=store.get("prac");$("dt").value=today();$("tm").value=nowTime();
+  strokes.length=0;sigPng=null;redrawPad();if(!val("admEmail"))$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";update();window.scrollTo({top:0})}
+$("clearAll").onclick=clearAll;
+
+for(const id of ids)$(id).addEventListener("input",()=>{if(id==="prac")store.set("prac",val("prac"));if(id==="admEmail")store.set("admEmail",val("admEmail"));update()});
+document.querySelectorAll('input[name=sex]').forEach(r=>r.addEventListener("change",update));
+$("tickAge").addEventListener("change",update);
+img.addEventListener("load",drawPreview);
+
+$("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
+const ADM_DEFAULT="SCHN-CHW-PatientBookingOffice@health.nsw.gov.au";
+$("admEmail").value=store.get("admEmail")||ADM_DEFAULT;
+loadExample();
+sizePad();window.addEventListener("resize",()=>{sizePad()});
+update();
+
+(async()=>{
+  try{const doc=await PDFLib.PDFDocument.create();font=await doc.embedFont(PDFLib.StandardFonts.Helvetica)}catch(_){}
+  try{const r=await fetch("../consent_form.pdf");if(r.ok)templateBytes=await r.arrayBuffer()}catch(_){}
+  if(!templateBytes)$("sendStatus").textContent="The blank form didn't load. Reload the page.";
+  update();
+})();
+(async()=>{
+  if(!window.claude||!claude.use){$("photoBtn").textContent="Photograph label (barcode only)";$("privacyNote").hidden=true;return}
+  const s=await claude.use("sample");
+  if(s){const lim=await s.limits().catch(()=>null);if(lim&&lim.images)sample=s}
+  if(!sample){$("privacyNote").hidden=true;$("photoBtn").textContent="Photograph label (barcode only)"}
+  update();
+})();
+})();
+</script>
+
+</body></html>

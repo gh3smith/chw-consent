@@ -47,6 +47,16 @@ The iPhone needs to load the app once from an **https://** address. After that i
 - Print one filled form and check the text lines up on paper.
 - Confirm with SCHN Privacy that emailing the form to a family's personal address is covered by local policy.
 
+## Version 2 (version2/)
+
+A tablet/PC layout of the prefill app with a live form preview, at `version2/` (e.g. `https://<your-site>/version2/`). It uses the blank form, preview image and pdf-lib from the main folder.
+
+- The PDF can only leave the app as an email attachment (**Attach PDF to email** opens the share sheet). There is no save-to-device button.
+- One **Copy both email addresses** button copies the admissions and parent addresses together for the To line.
+- Admissions defaults to SCHN-CHW-PatientBookingOffice@health.nsw.gov.au.
+- `version2/CHW_Consent_Prefill_version2.html` is a single-file copy with the form built in, for opening directly in Microsoft Edge on a Windows PC.
+- On iPhone, the share sheet still lists "Save to Files"; iOS provides that option and a web page cannot remove it.
+
 ## Updating
 
 After changing any file, change `VERSION` in `sw.js` (e.g. `chw-consent-v2`). Phones pick up the new version the next time the app is opened online.
