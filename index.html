@@ -72,6 +72,8 @@ main .gut{padding-block:14px calc(32px + env(safe-area-inset-bottom,0px));displa
 .note.warn{border-color:var(--warn);background:var(--warn-soft)}
 .note.ok{border-color:var(--ok);background:var(--ok-soft)}
 .note p{margin:0}
+.note .mono{overflow-wrap:anywhere;word-break:break-all}
+.note{min-width:0;overflow-wrap:anywhere}
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg label{position:relative;flex:1;text-align:center;padding:10px 6px;border-right:1px solid var(--line);background:var(--bg);font-size:15px}
 .seg label:last-child{border-right:0}
@@ -165,7 +167,7 @@ details.preview[open] summary::after{content:"Hide"}
     <h2 id="h2"><span class="n">2</span>Procedure</h2>
     <p class="sub">No abbreviations on the form. Write sides and procedures in full.</p>
     <div class="grid">
-      <div class="f full"><label class="lbl" for="prac">Practitioner name</label><input id="prac" type="text" autocapitalize="words"></div>
+      <div class="f full"><label class="lbl" for="prac">Practitioner name sending RFA</label><input id="prac" type="text" autocapitalize="words"></div>
       <div class="f full"><label class="lbl" for="proc">Procedure or treatment</label><textarea id="proc" rows="2" placeholder="e.g. Right inguinal orchidopexy"></textarea><span class="hint" id="procHint"></span></div>
       <div class="f full"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint warn" id="condHint"></span></div>
       <div class="f"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
@@ -213,8 +215,7 @@ details.preview[open] summary::after{content:"Hide"}
       <button class="btn sm send" data-send="1" type="button">Or share the PDF straight to an app</button>
     </div>
     <p class="status" id="sendStatus" aria-live="polite"></p>
-    <p class="foot"><b>Email parent and admissions</b> opens Mail with both addresses, the subject and the message filled in. To attach the form, tap in the message, tap the document icon above the keyboard (or the arrow, then the document icon), and choose the PDF from Recents. Send from your NSW Health account only.</p>
-  </section>
+    <div class="note"><p><b>3. Attach the form in Mail.</b> iPhone doesn't let an app add the attachment for you. In the new email, tap in the message, tap the <b>document icon</b> above the keyboard (or <b>&lt;</b> first, then the document icon), open <b>Recents</b> and choose <span class="mono" id="attachName">the PDF</span>. Then send. Use your NSW Health account only.</p></div>  </section>
 
   <p class="foot" style="text-align:center">Patient details stay on this phone and are cleared with New patient. <a href="#" id="loadExample" style="color:var(--accent)">Try with an example patient</a></p>
 </div></main>
@@ -427,7 +428,7 @@ function update(){
   $("procHint").textContent=!d.proc?"Printed in both the practitioner and parent sections.":lay.procLineOver?"Too long for the one line in the parent section. Shorten it.":lay.procOver?"Too long for the form. Shorten it.":ab1.length?"Possible abbreviations: "+ab1.join(", ")+". Write them in full.":"Fits in both sections of the form.";
   var condOver=lay.text.some(function(t){return t.k==="cond"&&t.over});
   $("condHint").textContent=condOver?"Too long for the line. Shorten it.":"";
-  var need=[["Patient name",d.fam&&d.giv,d.fam?"giv":"fam"],["MRN",d.mrn,"mrn"],["Date of birth",d.dob,"dob"],["Practitioner",d.prac,"prac"],["Procedure",d.proc&&!lay.procOver,"proc"],["Condition",d.cond,"cond"],["Signature",strokes.length>0,"pad"],["Blank form loaded",!!templateBytes,""]];
+  var need=[["Patient name",d.fam&&d.giv,d.fam?"giv":"fam"],["MRN",d.mrn,"mrn"],["Date of birth",d.dob,"dob"],["Practitioner sending RFA",d.prac,"prac"],["Procedure",d.proc&&!lay.procOver,"proc"],["Condition",d.cond,"cond"],["Signature",strokes.length>0,"pad"],["Blank form loaded",!!templateBytes,""]];
   $("checks").innerHTML=need.map(function(n){return '<div><span class="dot '+(n[1]?"ok":"")+'"></span>'+n[0]+"</div>"}).join("");
   var ok=need.every(function(n){return n[1]});
   missing=need.filter(function(n){return !n[1]});
@@ -441,7 +442,7 @@ function buildMails(d){
   mails[1]={to:d.parEmail,cc:d.admEmail,sub:"Consent form",body:
 "Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead"+onSd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead\n\nPatient: "+pn+" · MRN "+d.mrn+" · DOB "+C.ausDate(d.dob)+(d.surg?" · Operation "+C.ausDate(d.surg):"")+"\nCopy to Admissions for filing."};
   $("m1to").textContent=mails[1].to||"Parent email not entered";$("m1cc").textContent=mails[1].cc||"Admissions email not entered";
-  $("m1sub").textContent=mails[1].sub;$("m1body").textContent=mails[1].body;
+  $("m1sub").textContent=mails[1].sub;$("m1body").textContent=mails[1].body;$("attachName").textContent=fileName(d);
 }
 
 /* ---------- PDF, built ahead so the share sheet opens straight from the tap ---------- */
@@ -462,7 +463,7 @@ function openMail(k){
   if(blockIfMissing())return;
   var m=mails[k],st=$("sendStatus");
   var href="mailto:"+encodeURIComponent(m.to||"").replace(/%40/g,"@")+"?"+(m.cc?"cc="+encodeURIComponent(m.cc).replace(/%40/g,"@")+"&":"")+"subject="+encodeURIComponent(m.sub)+"&body="+encodeURIComponent(m.body);
-  st.textContent="Opening Mail. Attach "+fileName(data())+": tap in the message, then the document icon above the keyboard, and pick it from Recents.";
+  st.textContent="Opening Mail. Now attach "+fileName(data())+" (step 3 below).";
   window.location.href=href;
 }
 document.querySelectorAll("[data-mailto]").forEach(function(b){b.addEventListener("click",function(){openMail(b.getAttribute("data-mailto"))})});
