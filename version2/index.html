@@ -364,7 +364,7 @@ Procedure: ${op} · Date of operation: ${val("surg")?ausDate(val("surg")):""}`;
   emails.data={s:m1s,b:m1b};
 }
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function addrs(){return [val("admEmail"),val("parEmail")].filter(Boolean).join("; ")}
+function addrs(){return [val("admEmail"),val("parEmail")].map(s=>s.replace(/[;,\s]+$/,"")).filter(Boolean).join(", ")}
 let stTimer=null;
 function status(t,keep){const s=$("sendStatus");s.textContent=t;clearTimeout(stTimer);if(!keep)stTimer=setTimeout(()=>s.textContent="",4000)}
 $("copyAddr").onclick=async()=>{
