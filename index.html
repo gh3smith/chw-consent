@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CHW Consent</title>
+<meta name="description" content="Fill the SCN020.001 consent form from a patient label, sign it, and email it to the family and admissions.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Consent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#122433">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Phone-first single column: dark header under the status bar, four numbered sections, a fold-out preview of the real form, then send actions */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --sunk:#E3E9EC; --ink:#122433; --muted:#53687A; --line:#C9D4DB;
+  --accent:#0F6E78; --accent-ink:#FFFFFF; --accent-soft:#D6ECEE;
+  --ok:#1F7A4A; --ok-soft:#DDF1E5; --warn:#9A5A00; --warn-soft:#FBEBD2; --bad:#B23A3A; --bad-soft:#F6DEDE;
+  --bar:#122433; --bar-ink:#F1F5F7; --bar-muted:#9FB3C2; --paper:#FFFFFF;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --f-label:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E171E; --surface:#16222B; --sunk:#1D2C37; --ink:#E4ECF1; --muted:#93A8B8; --line:#2C3E4B;
+  --accent:#4CB8C2; --accent-ink:#06191C; --accent-soft:#163A40;
+  --ok:#5CCB8E; --ok-soft:#173527; --warn:#E3A44A; --warn-soft:#3A2A12; --bad:#EE8080; --bad-soft:#3E1D1D;
+  --bar:#060D12; --bar-ink:#E4ECF1; --bar-muted:#7F95A5; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body)}
+[hidden]{display:none!important}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:720px;margin:0 auto}
+h1,h2{margin:0;line-height:1.2;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lbl{font:600 12px/1.2 var(--f-label);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+header{background:var(--bar);color:var(--bar-ink);position:sticky;top:0;z-index:9;padding-top:env(safe-area-inset-top,0px)}
+header .gut{display:flex;align-items:center;gap:10px;padding-block:10px}
+.brand{font-weight:700;font-size:17px}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--bar-muted);letter-spacing:.06em;text-transform:uppercase}
+.hbtn{margin-left:auto;background:transparent;border:1px solid var(--bar-muted);color:var(--bar-ink);padding:7px 12px;border-radius:8px;font-weight:600;font-size:14px}
+
+main .gut{padding-block:14px calc(32px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.card h2{font-size:19px;display:flex;align-items:center;gap:10px}
+.n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-grid;place-items:center;font-size:14px;font-weight:700;flex:none}
+.sub{color:var(--muted);margin:0;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.full{grid-column:1/-1}
+.f{display:grid;gap:4px;min-width:0}
+.f input,.f textarea,.f select{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0;font-size:16px}
+.f textarea{min-height:76px;resize:vertical}
+.f input[type=date],.f input[type=time]{min-height:44px;-webkit-appearance:none;appearance:none}
+.hint{font-size:13px;color:var(--muted)}
+.hint.warn{color:var(--warn)}
+.mono{font-family:var(--f-mono)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:12px 16px;border-radius:12px;font-weight:700;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{padding:7px 12px;min-height:36px;font-size:14px;border-radius:9px}
+.btn:disabled{opacity:.45}
+.btn.block{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 10px 10px 0;font-size:15px}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p{margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg label{position:relative;flex:1;text-align:center;padding:10px 6px;border-right:1px solid var(--line);background:var(--bg);font-size:15px}
+.seg label:last-child{border-right:0}
+.seg input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-ink);font-weight:700}
+.status{font-size:14px;color:var(--muted)}
+.scanbox{border:1.5px dashed var(--accent);background:var(--accent-soft)}
+
+.pad{position:relative;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;height:170px;touch-action:none;-webkit-user-select:none;user-select:none}
+.pad canvas{width:100%;height:100%;display:block;border-radius:12px}
+.pad .base{position:absolute;left:18px;right:18px;bottom:40px;border-bottom:1px solid #8A9AA6;pointer-events:none}
+.pad .x{position:absolute;left:18px;bottom:44px;color:#8A9AA6;font-weight:700;font-size:18px;pointer-events:none}
+.pad .ph{position:absolute;inset:0;display:grid;place-items:center;color:#8A9AA6;pointer-events:none}
+
+details.preview{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+details.preview summary{padding:14px 16px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.preview summary::-webkit-details-marker{display:none}
+details.preview summary::after{content:"Show";font-weight:600;color:var(--accent);font-size:14px}
+details.preview[open] summary::after{content:"Hide"}
+.sheet{background:#fff;border-top:1px solid var(--line)}
+.sheet canvas{display:block;width:100%;height:auto}
+
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:14px}
+.checks div{display:flex;gap:8px;align-items:center;min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.dot.ok{background:var(--ok)}
+
+.mail{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px;display:grid;gap:8px;min-width:0}
+.kv{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:15px}
+.kv .v{overflow-wrap:anywhere}
+.mail details summary{color:var(--accent);font-weight:600;font-size:14px;cursor:pointer}
+.mail pre{white-space:pre-wrap;font:14px/1.5 var(--f-body);margin:8px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.foot{font-size:13px;color:var(--muted);margin:0}
+@media (min-width:620px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.s2{grid-column:span 2}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="gut">
+    <div class="brand">CHW Consent<small>SCN020.001 · Westmead</small></div>
+    <button class="hbtn" id="clearAll" type="button">New patient</button>
+  </div>
+</header>
+
+<main><div class="gut">
+
+  <div class="note" id="installNote" hidden><p><b>Install on this iPhone:</b> tap the Share button in Safari, then <b>Add to Home Screen</b>. It then opens like an app and works without signal.</p></div>
+  <div class="note warn" id="exampleNote" hidden><p><b>Example patient.</b> Not real details. Tap New patient before use.</p></div>
+
+  <!-- 1 PATIENT -->
+  <section class="card" aria-labelledby="h1">
+    <h2 id="h1"><span class="n">1</span>Patient label</h2>
+    <p class="sub">Tap the box below, choose <b>Scan Text</b> (the camera icon above the keyboard) and point the camera at the label. Tap Insert, and the details fill in.</p>
+    <div class="f">
+      <label class="lbl" for="labelText">Label text</label>
+      <textarea id="labelText" class="scanbox" rows="4" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here, then Scan Text"></textarea>
+      <span class="hint" id="parseHint">Nothing leaves this phone. Check every field against the label.</span>
+    </div>
+    <div class="grid">
+      <div class="f s2"><label class="lbl" for="fam">Family name</label><input id="fam" type="text" autocomplete="off" autocapitalize="characters"></div>
+      <div class="f s2"><label class="lbl" for="giv">Given name</label><input id="giv" type="text" autocomplete="off" autocapitalize="words"></div>
+      <div class="f"><label class="lbl" for="mrn">MRN</label><input id="mrn" type="text" class="mono" autocomplete="off" inputmode="text"></div>
+      <div class="f"><label class="lbl" for="dob">Date of birth</label><input id="dob" type="date"><span class="hint" id="ageHint"></span></div>
+      <div class="f full s2"><span class="lbl">Sex</span>
+        <div class="seg" role="radiogroup" aria-label="Sex">
+          <label><input type="radio" name="sex" value="M" id="sexM">Male</label>
+          <label><input type="radio" name="sex" value="F" id="sexF">Female</label>
+          <label><input type="radio" name="sex" value="" id="sexU" checked>Not stated</label>
+        </div></div>
+      <div class="f full"><label class="lbl" for="a1">Address</label><input id="a1" type="text" autocomplete="off"></div>
+      <div class="f full"><label class="lbl" for="a2">Suburb, state, postcode</label><input id="a2" type="text" autocomplete="off" autocapitalize="characters"></div>
+      <div class="f s2"><label class="lbl" for="mo">M.O.</label><input id="mo" type="text" autocomplete="off"></div>
+      <div class="f s2"><label class="lbl" for="ward">Location / ward</label><input id="ward" type="text" autocomplete="off"></div>
+    </div>
+  </section>
+
+  <!-- 2 PROCEDURE -->
+  <section class="card" aria-labelledby="h2">
+    <h2 id="h2"><span class="n">2</span>Procedure</h2>
+    <p class="sub">No abbreviations on the form. Write sides and procedures in full.</p>
+    <div class="grid">
+      <div class="f full"><label class="lbl" for="prac">Practitioner name</label><input id="prac" type="text" autocapitalize="words"></div>
+      <div class="f full"><label class="lbl" for="proc">Procedure or treatment, and reasons</label><textarea id="proc" rows="3"></textarea><span class="hint" id="procHint"></span></div>
+      <div class="f full"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint warn" id="condHint"></span></div>
+      <div class="f full"><label class="lbl" for="proc2">Procedure, for the parent section</label><input id="proc2" type="text"><span class="hint">Short name, e.g. Right inguinal orchidopexy.</span></div>
+      <div class="f"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
+      <div class="f"><label class="lbl" for="tm">Time</label><input id="tm" type="time"></div>
+      <div class="f"><label class="lbl" for="surg">Date of operation</label><input id="surg" type="date"></div>
+      <div class="f"><label class="lbl" for="interp">Interpreter</label><input id="interp" type="text" placeholder="Name, if present"></div>
+      <div class="f full"><label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="tickAge" checked style="width:22px;height:22px;accent-color:var(--accent)"><span id="ageBoxText">Tick the patient age box from date of birth</span></label></div>
+      <div class="f full"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
+    </div>
+  </section>
+
+  <!-- 3 SIGN -->
+  <section class="card" aria-labelledby="h3">
+    <h2 id="h3"><span class="n">3</span>Practitioner signature</h2>
+    <div class="pad" id="pad"><canvas id="sig" aria-label="Signature pad"></canvas><span class="x">×</span><span class="base"></span><span class="ph" id="sigPh">Sign with your finger</span></div>
+    <div class="row"><button class="btn sm" id="sigClear" type="button">Clear signature</button></div>
+  </section>
+
+  <details class="preview" id="previewBox">
+    <summary>Preview the form</summary>
+    <div class="sheet"><canvas id="pv" width="1192" height="1692" aria-label="Preview of the filled consent form"></canvas></div>
+  </details>
+
+  <!-- 4 SEND -->
+  <section class="card" aria-labelledby="h4">
+    <h2 id="h4"><span class="n">4</span>Send</h2>
+    <div class="checks" id="checks"></div>
+    <div class="grid">
+      <div class="f s2"><label class="lbl" for="parName">Parent or guardian</label><input id="parName" type="text" autocapitalize="words"></div>
+      <div class="f s2"><label class="lbl" for="parEmail">Parent email</label><input id="parEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off"></div>
+      <div class="f full"><label class="lbl" for="admEmail">Admissions email</label><input id="admEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="Remembered on this phone"></div>
+    </div>
+
+    <div class="mail">
+      <span class="lbl">Email the parent</span>
+      <div class="kv"><span class="lbl">To</span><span class="v" id="m1to"></span><button class="btn sm" data-copy="1to" type="button">Copy</button></div>
+      <div class="kv"><span class="lbl">Subject</span><span class="v" id="m1sub"></span><button class="btn sm" data-copy="1sub" type="button">Copy</button></div>
+      <details><summary>Show message</summary><pre id="m1body"></pre></details>
+      <button class="btn primary block send" data-send="1" type="button">Email parent with PDF</button>
+    </div>
+    <div class="mail">
+      <span class="lbl">Email admissions</span>
+      <div class="kv"><span class="lbl">To</span><span class="v" id="m2to"></span><button class="btn sm" data-copy="2to" type="button">Copy</button></div>
+      <div class="kv"><span class="lbl">Subject</span><span class="v" id="m2sub"></span><button class="btn sm" data-copy="2sub" type="button">Copy</button></div>
+      <details><summary>Show message</summary><pre id="m2body"></pre></details>
+      <button class="btn primary block send" data-send="2" type="button">Email admissions with PDF</button>
+    </div>
+    <button class="btn block" id="savePdf" type="button">Save PDF to Files</button>
+    <p class="status" id="sendStatus" aria-live="polite"></p>
+    <p class="foot">Each email button opens the iPhone share sheet with the PDF attached. Choose Mail or Outlook, then paste the address if it isn't filled in. Send from your NSW Health account only.</p>
+  </section>
+
+  <p class="foot" style="text-align:center">Patient details stay on this phone and are cleared with New patient. <a href="#" id="loadExample" style="color:var(--accent)">Try with an example patient</a></p>
+</div></main>
+
+<img id="formImg" src="form-preview.jpg" alt="" hidden>
+<script src="pdf-lib.min.js"></script>
+<script src="core.js"></script>
+<script>
+(function(){
+"use strict";
+var C=window.ConsentCore,$=function(id){return document.getElementById(id)};
+var SCALE=1192/595.8;
+var font=null,measure=C.makeMeasure(null),templateBytes=null,img=$("formImg");
+var strokes=[],sigPng=null,sigAspect=3,sigBytes=null;
+var ready={file:null,key:""};
+
+var FIELDS=["fam","giv","mrn","dob","a1","a2","mo","ward","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
+var KEEP=["prac","fac","admEmail"];
+var store={get:function(k){try{return localStorage.getItem(k)||""}catch(e){return""}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+function v(id){return $(id).value.trim()}
+function sex(){var r=document.querySelector('input[name=sex]:checked');return r?r.value:""}
+function data(){var d={};FIELDS.forEach(function(k){d[k]=v(k)});d.sex=sex();d.tickAge=$("tickAge").checked;return d}
+function todayIso(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function nowTime(){var d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ---------- label text ---------- */
+var parseTimer=null;
+$("labelText").addEventListener("input",function(){clearTimeout(parseTimer);parseTimer=setTimeout(applyLabel,350)});
+function applyLabel(){
+  var t=$("labelText").value;if(!t.trim())return;
+  var r=C.parseLabel(t),got=[];
+  [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["a1","Address"],["a2","Suburb"],["mo","M.O."],["ward","Ward"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
+  if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
+  var miss=["Family name","Given name","MRN","Date of birth"].filter(function(x){return got.indexOf(x)<0});
+  $("parseHint").className="hint"+(miss.length?" warn":"");
+  $("parseHint").textContent=got.length?(miss.length?"Filled what it could. Type in: "+miss.join(", ")+".":"Filled from the label. Check each field against it."):"Couldn't find patient details in that text. Type them in below.";
+  $("exampleNote").hidden=true;update();
+}
+
+/* ---------- preview ---------- */
+var pv=$("pv"),pctx=pv.getContext("2d"),sigImg=new Image();
+sigImg.onload=function(){drawPreview()};
+function drawPreview(){
+  if(!$("previewBox").open)return;
+  pctx.fillStyle="#fff";pctx.fillRect(0,0,pv.width,pv.height);
+  if(img.complete&&img.naturalWidth)pctx.drawImage(img,0,0,pv.width,pv.height);
+  var lay=C.layout(data(),measure);pctx.fillStyle="#12245E";pctx.textAlign="left";
+  lay.text.forEach(function(t){pctx.font=(t.s*SCALE)+"px Helvetica, Arial, sans-serif";pctx.fillText(t.t,t.x*SCALE,t.y*SCALE)});
+  pctx.font="bold "+(9*SCALE)+"px Helvetica, Arial, sans-serif";pctx.textAlign="center";
+  lay.ticks.forEach(function(k){pctx.fillText("X",C.L[k].x*SCALE,(C.L[k].y+3.2)*SCALE)});pctx.textAlign="left";
+  if(sigPng&&sigImg.complete&&sigImg.naturalWidth){var b=C.sigBox(sigAspect);pctx.drawImage(sigImg,b.x*SCALE,b.top*SCALE,b.w*SCALE,b.h*SCALE)}
+}
+$("previewBox").addEventListener("toggle",drawPreview);
+img.addEventListener("load",drawPreview);
+
+/* ---------- checks, hints, emails ---------- */
+function abbrevs(t){var m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return m.filter(function(x,i){return m.indexOf(x)===i&&["NSW","CHW","SCHN","MRN","DOB"].indexOf(x)<0})}
+function longDate(iso){if(!iso)return"[date of operation]";return new Date(iso+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+var mails={};
+function update(){
+  var d=data(),a=C.ageOn(d.dob,d.dt),ab=C.ageBox(d.dob,d.dt);
+  $("ageHint").textContent=a===null||isNaN(a)?"":a+" years";
+  $("ageBoxText").textContent=ab?'Tick "'+({u14:"Under 14 years",a14:"14 – 16 years",a16:"16 years and over"})[ab]+'"':"Tick the patient age box from date of birth";
+  var lay=C.layout(d,measure),ab1=abbrevs(d.proc+" "+d.proc2+" "+d.cond);
+  $("procHint").className="hint"+(lay.procOver||ab1.length?" warn":"");
+  $("procHint").textContent=!d.proc?"Fills two lines on the form.":lay.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?"Possible abbreviations: "+ab1.join(", ")+". Write them in full.":"Fits on the form.";
+  var condOver=lay.text.some(function(t){return t.k==="cond"&&t.over});
+  $("condHint").textContent=condOver?"Too long for the line. Shorten it.":"";
+  var need=[["Patient name",d.fam&&d.giv],["MRN",d.mrn],["Date of birth",d.dob],["Practitioner",d.prac],["Procedure",d.proc&&!lay.procOver],["Condition",d.cond],["Parent-section procedure",d.proc2],["Operation date",d.surg],["Signature",strokes.length>0],["Blank form loaded",!!templateBytes]];
+  $("checks").innerHTML=need.map(function(n){return '<div><span class="dot '+(n[1]?"ok":"")+'"></span>'+n[0]+"</div>"}).join("");
+  var ok=need.every(function(n){return n[1]});
+  document.querySelectorAll(".send,#savePdf").forEach(function(b){b.disabled=!ok});
+  buildMails(d);drawPreview();
+  if(ok)schedulePdf();else{ready.file=null;ready.key=""}
+}
+function buildMails(d){
+  var child=d.giv||"your child",par=d.parName?d.parName.split(" ")[0]:"",op=d.proc2||"[procedure]",sd=longDate(d.surg),pn=[d.giv,d.fam?C.titleCase(d.fam):""].filter(Boolean).join(" ");
+  mails[1]={to:d.parEmail,sub:"Consent form for "+child+"'s operation on "+sd,body:
+"Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead on "+sd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead"};
+  mails[2]={to:d.admEmail,sub:"Consent form – "+(d.fam||"").toUpperCase()+", "+d.giv+" – MRN "+d.mrn+" – "+op+" – "+C.ausDate(d.surg),body:
+"Hi Admissions,\n\nAttached is the consent form (SCN020.001) for:\n\nPatient: "+pn+"\nMRN: "+d.mrn+"\nDOB: "+C.ausDate(d.dob)+"\nProcedure: "+op+"\nDate of operation: "+C.ausDate(d.surg)+"\nPractitioner: "+d.prac+"\n\nThe practitioner section is completed and signed. The family has been emailed a copy to print, sign and bring on the day. Please file this copy for the admission.\n\nThanks,\n"+d.prac};
+  [1,2].forEach(function(k){$("m"+k+"to").textContent=mails[k].to||(k===1?"Parent email not entered":"Admissions email not entered");$("m"+k+"sub").textContent=mails[k].sub;$("m"+k+"body").textContent=mails[k].body});
+}
+
+/* ---------- PDF, built ahead so the share sheet opens straight from the tap ---------- */
+var pdfTimer=null;
+function stateKey(d){return JSON.stringify(d)+"|"+(sigPng?sigPng.length+":"+strokes.length:"")}
+function fileName(d){return "Consent_"+C.winAnsi(d.fam).toUpperCase().replace(/[^A-Z0-9]+/g,"")+"_"+d.mrn.replace(/[^A-Za-z0-9]+/g,"")+"_"+(d.surg.replace(/-/g,"")||"undated")+".pdf"}
+function schedulePdf(){clearTimeout(pdfTimer);pdfTimer=setTimeout(makePdf,300)}
+function makePdf(){
+  var d=data(),key=stateKey(d);if(ready.key===key&&ready.file)return Promise.resolve(ready.file);
+  ready.file=null;
+  return C.buildPdf(PDFLib,templateBytes,d,{png:sigBytes,aspect:sigAspect}).then(function(bytes){
+    if(stateKey(data())!==key)return null;
+    ready.key=key;ready.file=new File([bytes],fileName(d),{type:"application/pdf"});return ready.file;
+  }).catch(function(){$("sendStatus").textContent="Couldn't build the PDF. Check the details and try again.";return null});
+}
+function canShareFile(f){try{return !!(navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
+function shareMail(k){
+  var f=ready.file,st=$("sendStatus");
+  if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
+  var m=mails[k];
+  if(canShareFile(f)){
+    navigator.share({files:[f],title:m.sub,text:m.body}).then(function(){st.textContent=(k==1?"Parent":"Admissions")+" email handed to the share sheet. Check it sent from your mail app."})
+      .catch(function(e){st.textContent=e&&e.name==="AbortError"?"Cancelled.":"Sharing didn't work here. Use Save PDF to Files, then attach it in Mail."});
+  }else{
+    downloadFile(f);
+    var href="mailto:"+encodeURIComponent(m.to||"")+"?subject="+encodeURIComponent(m.sub)+"&body="+encodeURIComponent(m.body);
+    st.innerHTML="This browser can't attach files directly. The PDF was downloaded: <a href=\""+esc(href)+"\" style=\"color:var(--accent)\">open an email draft</a> and attach it.";
+  }
+}
+function downloadFile(f){var u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},4000)}
+document.querySelectorAll("[data-send]").forEach(function(b){b.addEventListener("click",function(){shareMail(b.getAttribute("data-send"))})});
+$("savePdf").addEventListener("click",function(){
+  var f=ready.file,st=$("sendStatus");
+  if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
+  if(canShareFile(f)){navigator.share({files:[f]}).then(function(){st.textContent="Saved or shared "+f.name+"."}).catch(function(e){st.textContent=e&&e.name==="AbortError"?"Cancelled.":"Couldn't open the share sheet."})}
+  else{downloadFile(f);st.textContent="Downloaded "+f.name+"."}
+});
+document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){
+  var key=b.getAttribute("data-copy"),k=key.charAt(0),part=key.slice(1),txt=part==="to"?mails[k].to:mails[k].sub;if(!txt)return;
+  var done=function(){var o=b.textContent;b.textContent="Copied";setTimeout(function(){b.textContent=o},1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,function(){fallbackCopy(txt);done()});else{fallbackCopy(txt);done()}
+})});
+function fallbackCopy(t){var ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);try{document.execCommand("copy")}catch(e){}ta.remove()}
+
+/* ---------- signature ---------- */
+var cv=$("sig"),cx=cv.getContext("2d"),cur=null;
+function sizePad(){var r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);cx.setTransform(dpr,0,0,dpr,0,0);redrawPad()}
+function strokeAll(c,list,lw){c.strokeStyle="#12245E";c.lineWidth=lw;c.lineCap="round";c.lineJoin="round";list.forEach(function(s){c.beginPath();s.forEach(function(p,i){i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])});if(s.length===1)c.lineTo(s[0][0]+.1,s[0][1]);c.stroke()})}
+function redrawPad(){var r=cv.getBoundingClientRect();cx.clearRect(0,0,r.width,r.height);strokeAll(cx,strokes,2.4);$("sigPh").hidden=strokes.length>0}
+function pt(e){var b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]}
+cv.addEventListener("pointerdown",function(e){e.preventDefault();cv.setPointerCapture(e.pointerId);cur=[pt(e)];strokes.push(cur);$("sigPh").hidden=true});
+cv.addEventListener("pointermove",function(e){if(!cur)return;e.preventDefault();var p=pt(e),q=cur[cur.length-1];cur.push(p);cx.strokeStyle="#12245E";cx.lineWidth=2.4;cx.lineCap="round";cx.beginPath();cx.moveTo(q[0],q[1]);cx.lineTo(p[0],p[1]);cx.stroke()});
+function endStroke(){if(!cur)return;cur=null;exportSig()}
+cv.addEventListener("pointerup",endStroke);cv.addEventListener("pointercancel",endStroke);
+function exportSig(){
+  if(!strokes.length){sigPng=null;sigBytes=null;update();return}
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;strokes.forEach(function(s){s.forEach(function(p){x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1])})});
+  var pad=4,w=Math.max(10,x1-x0+pad*2),h=Math.max(10,y1-y0+pad*2),k=3,o=document.createElement("canvas");
+  o.width=Math.round(w*k);o.height=Math.round(h*k);var oc=o.getContext("2d");oc.scale(k,k);oc.translate(-x0+pad,-y0+pad);strokeAll(oc,strokes,2.6);
+  sigAspect=w/h;sigPng=o.toDataURL("image/png");sigImg.src=sigPng;
+  var bin=atob(sigPng.split(",")[1]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);sigBytes=arr;
+  update();
+}
+$("sigClear").addEventListener("click",function(){strokes.length=0;redrawPad();exportSig()});
+
+/* ---------- patient reset & example ---------- */
+var EXAMPLE={labelText:"NGUYEN, Oliver\nMRN: 0004417123   DOB: 14/03/2022   M\n12 Example Street\nWESTMEAD NSW 2145\nWard: Day Surgery Unit",
+  prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
+  cond:"Right undescended testis",proc2:"Right inguinal orchidopexy",parName:"Linh Nguyen",parEmail:"parent@example.com"};
+function clearPatient(){
+  FIELDS.forEach(function(k){if(KEEP.indexOf(k)<0)$(k).value=""});
+  $("labelText").value="";$("sexU").checked=true;$("dt").value=todayIso();$("tm").value=nowTime();
+  $("parseHint").className="hint";$("parseHint").textContent="Nothing leaves this phone. Check every field against the label.";
+  strokes.length=0;sigPng=null;sigBytes=null;redrawPad();ready.file=null;ready.key="";
+  $("sendStatus").textContent="";$("exampleNote").hidden=true;$("previewBox").open=false;update();window.scrollTo(0,0);
+}
+$("clearAll").addEventListener("click",clearPatient);
+$("loadExample").addEventListener("click",function(e){e.preventDefault();clearPatient();
+  Object.keys(EXAMPLE).forEach(function(k){$(k).value=EXAMPLE[k]});applyLabel();
+  var s=new Date();s.setDate(s.getDate()+21);$("surg").value=s.getFullYear()+"-"+String(s.getMonth()+1).padStart(2,"0")+"-"+String(s.getDate()).padStart(2,"0");
+  $("exampleNote").hidden=false;update();});
+
+/* ---------- start ---------- */
+FIELDS.forEach(function(k){$(k).addEventListener("input",function(){if(KEEP.indexOf(k)>=0)store.set(k,v(k));update()})});
+document.querySelectorAll('input[name=sex]').forEach(function(r){r.addEventListener("change",update)});
+$("tickAge").addEventListener("change",update);
+$("prac").value=store.get("prac");$("admEmail").value=store.get("admEmail");$("fac").value=store.get("fac")||"The Children's Hospital at Westmead";
+$("dt").value=todayIso();$("tm").value=nowTime();
+var standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+$("installNote").hidden=standalone||!/iPhone|iPad|iPod/.test(navigator.userAgent);
+sizePad();window.addEventListener("resize",sizePad);
+update();
+(function(){var p=PDFLib.PDFDocument.create().then(function(doc){return doc.embedFont(PDFLib.StandardFonts.Helvetica)}).then(function(f){font=f;measure=C.makeMeasure(f)}).catch(function(){});
+  var q=fetch("consent_form.pdf").then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()}).then(function(b){templateBytes=b}).catch(function(){$("sendStatus").textContent="The blank form didn't load. Check your connection and reopen the app."});
+  Promise.all([p,q]).then(update);})();
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});
+})();
+</script>
+</body>
+</html>
