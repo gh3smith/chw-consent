@@ -200,23 +200,20 @@ details.preview[open] summary::after{content:"Hide"}
       <div class="f full"><label class="lbl" for="admEmail">Admissions email</label><input id="admEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="Remembered on this phone"></div>
     </div>
 
+    <button class="btn primary block" id="savePdf" type="button">1. Save PDF to Files</button>
+    <p class="hint" style="margin:0">Choose <b>Save to Files</b> in the share sheet. Do this once per patient.</p>
+
     <div class="mail">
-      <span class="lbl">Email the parent</span>
+      <span class="lbl">2. Email the parent, copying admissions</span>
       <div class="kv"><span class="lbl">To</span><span class="v" id="m1to"></span><button class="btn sm" data-copy="1to" type="button">Copy</button></div>
+      <div class="kv"><span class="lbl">Cc</span><span class="v" id="m1cc"></span><button class="btn sm" data-copy="1cc" type="button">Copy</button></div>
       <div class="kv"><span class="lbl">Subject</span><span class="v" id="m1sub"></span><button class="btn sm" data-copy="1sub" type="button">Copy</button></div>
       <details><summary>Show message</summary><pre id="m1body"></pre></details>
-      <button class="btn primary block send" data-send="1" type="button">Email parent with PDF</button>
+      <button class="btn primary block send" data-mailto="1" type="button">Email parent and admissions</button>
+      <button class="btn sm send" data-send="1" type="button">Or share the PDF straight to an app</button>
     </div>
-    <div class="mail">
-      <span class="lbl">Email admissions</span>
-      <div class="kv"><span class="lbl">To</span><span class="v" id="m2to"></span><button class="btn sm" data-copy="2to" type="button">Copy</button></div>
-      <div class="kv"><span class="lbl">Subject</span><span class="v" id="m2sub"></span><button class="btn sm" data-copy="2sub" type="button">Copy</button></div>
-      <details><summary>Show message</summary><pre id="m2body"></pre></details>
-      <button class="btn primary block send" data-send="2" type="button">Email admissions with PDF</button>
-    </div>
-    <button class="btn block" id="savePdf" type="button">Save PDF to Files</button>
     <p class="status" id="sendStatus" aria-live="polite"></p>
-    <p class="foot">Each email button opens the iPhone share sheet with the PDF attached. Choose Mail or Outlook, then paste the address if it isn't filled in. Send from your NSW Health account only.</p>
+    <p class="foot"><b>Email parent and admissions</b> opens Mail with both addresses, the subject and the message filled in. To attach the form, tap in the message, tap the document icon above the keyboard (or the arrow, then the document icon), and choose the PDF from Recents. Send from your NSW Health account only.</p>
   </section>
 
   <p class="foot" style="text-align:center">Patient details stay on this phone and are cleared with New patient. <a href="#" id="loadExample" style="color:var(--accent)">Try with an example patient</a></p>
@@ -441,11 +438,10 @@ function update(){
 }
 function buildMails(d){
   var child=d.giv||"your child",par=d.parName?d.parName.split(" ")[0]:"",op=d.proc||"[procedure]",sd=d.surg?longDate(d.surg):"",onSd=sd?" on "+sd:"",pn=[d.giv,d.fam?C.titleCase(d.fam):""].filter(Boolean).join(" ");
-  mails[1]={to:d.parEmail,sub:"Consent form for "+child+"'s operation"+onSd,body:
-"Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead"+onSd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead"};
-  mails[2]={to:d.admEmail,sub:"Consent form – "+(d.fam||"").toUpperCase()+", "+d.giv+" – MRN "+d.mrn+" – "+op+(d.surg?" – "+C.ausDate(d.surg):""),body:
-"Hi Admissions,\n\nAttached is the consent form (SCN020.001) for:\n\nPatient: "+pn+"\nMRN: "+d.mrn+"\nDOB: "+C.ausDate(d.dob)+"\nProcedure: "+op+(d.surg?"\nDate of operation: "+C.ausDate(d.surg):"")+"\nPractitioner: "+d.prac+"\n\nThe practitioner section is completed and signed. The family has been emailed a copy to print, sign and bring on the day. Please file this copy for the admission.\n\nThanks,\n"+d.prac};
-  [1,2].forEach(function(k){$("m"+k+"to").textContent=mails[k].to||(k===1?"Parent email not entered":"Admissions email not entered");$("m"+k+"sub").textContent=mails[k].sub;$("m"+k+"body").textContent=mails[k].body});
+  mails[1]={to:d.parEmail,cc:d.admEmail,sub:"Consent form",body:
+"Dear "+(par||"Parent or guardian")+",\n\nAttached is the consent form for "+child+"'s operation ("+op+") at The Children's Hospital at Westmead"+onSd+".\n\nPlease:\n1. Print the form (one page).\n2. Read it, and in the \"Patient/Parent/Guardian Consent\" section tick the boxes you agree to, then print your name and sign.\n3. Bring the signed form with you on the day of the operation.\n\n"+(d.prac||"The surgeon")+" has filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.\n\nIf you can't print the form, tell the nurses when you arrive and a copy will be ready for you.\n\nKind regards,\n"+(d.prac||"[Practitioner]")+"\nDepartment of Paediatric Surgery and Urology\nThe Children's Hospital at Westmead\n\nPatient: "+pn+" · MRN "+d.mrn+" · DOB "+C.ausDate(d.dob)+(d.surg?" · Operation "+C.ausDate(d.surg):"")+"\nCopy to Admissions for filing."};
+  $("m1to").textContent=mails[1].to||"Parent email not entered";$("m1cc").textContent=mails[1].cc||"Admissions email not entered";
+  $("m1sub").textContent=mails[1].sub;$("m1body").textContent=mails[1].body;
 }
 
 /* ---------- PDF, built ahead so the share sheet opens straight from the tap ---------- */
@@ -462,13 +458,22 @@ function makePdf(){
   }).catch(function(){$("sendStatus").textContent="Couldn't build the PDF. Check the details and try again.";return null});
 }
 function canShareFile(f){try{return !!(navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
+function openMail(k){
+  if(blockIfMissing())return;
+  var m=mails[k],st=$("sendStatus");
+  var href="mailto:"+encodeURIComponent(m.to||"").replace(/%40/g,"@")+"?"+(m.cc?"cc="+encodeURIComponent(m.cc).replace(/%40/g,"@")+"&":"")+"subject="+encodeURIComponent(m.sub)+"&body="+encodeURIComponent(m.body);
+  st.textContent="Opening Mail. Attach "+fileName(data())+": tap in the message, then the document icon above the keyboard, and pick it from Recents.";
+  window.location.href=href;
+}
+document.querySelectorAll("[data-mailto]").forEach(function(b){b.addEventListener("click",function(){openMail(b.getAttribute("data-mailto"))})});
 function shareMail(k){
   if(blockIfMissing())return;
+  if(mails[k].to&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(mails[k].to).catch(function(){})}catch(e){}}
   var f=ready.file,st=$("sendStatus");
   if(!f){st.textContent="Preparing the PDF… tap again in a moment.";makePdf();return}
   var m=mails[k];
   if(canShareFile(f)){
-    navigator.share({files:[f],title:m.sub,text:m.body}).then(function(){st.textContent=(k==1?"Parent":"Admissions")+" email handed to the share sheet. Check it sent from your mail app."})
+    navigator.share({files:[f],title:m.sub,text:m.body}).then(function(){st.textContent="Shared. In Mail, paste the parent's address into To (it was copied), add admissions in Cc, and type the subject Consent form."})
       .catch(function(e){st.textContent=e&&e.name==="AbortError"?"Cancelled.":"Sharing didn't work here. Use Save PDF to Files, then attach it in Mail."});
   }else{
     downloadFile(f);
@@ -486,7 +491,7 @@ $("savePdf").addEventListener("click",function(){
   else{downloadFile(f);st.textContent="Downloaded "+f.name+"."}
 });
 document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){
-  var key=b.getAttribute("data-copy"),k=key.charAt(0),part=key.slice(1),txt=part==="to"?mails[k].to:mails[k].sub;if(!txt)return;
+  var key=b.getAttribute("data-copy"),k=key.charAt(0),part=key.slice(1),txt=part==="to"?mails[k].to:part==="cc"?mails[k].cc:mails[k].sub;if(!txt)return;
   var done=function(){var o=b.textContent;b.textContent="Copied";setTimeout(function(){b.textContent=o},1500)};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,function(){fallbackCopy(txt);done()});else{fallbackCopy(txt);done()}
 })});

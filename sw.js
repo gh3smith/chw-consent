@@ -1,5 +1,5 @@
 /* Offline cache for CHW Consent. Bump VERSION whenever any file changes so phones pick up the update. */
-const VERSION = "chw-consent-v6";
+const VERSION = "chw-consent-v8";
 const FILES = [
   "./", "./index.html", "./core.js", "./pdf-lib.min.js", "./zxing.min.js", "./consent_form.pdf", "./form-preview.jpg",
   "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"

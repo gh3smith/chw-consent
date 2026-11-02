@@ -37,7 +37,7 @@ The iPhone needs to load the app once from an **https://** address. After that i
    - Or open the **Camera** app, point at the label, tap the Live Text button, **Select All → Copy**, then tap **Paste** in the app.
 3. **Procedure:** enter it once, in full and without abbreviations; it prints in both the practitioner and parent sections. Add the condition. The date of the operation is optional.
 4. **Sign** with your finger. Open *Preview the form* to check it.
-5. **Send:** tap *Email parent with PDF*, choose Mail or Outlook, and paste the address (Copy button) if it isn't filled in. Repeat for admissions.
+5. **Send:** tap **1. Save PDF to Files** and choose *Save to Files*. Then tap **Email parent and admissions**: Mail opens with the parent in To, admissions in Cc, the subject "Consent form" and the message filled in. Tap in the message, tap the document icon above the keyboard, and attach the PDF from Recents.
 6. Tap **New patient** to clear everything before the next patient.
 
 ## Checking before clinical use
