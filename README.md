@@ -11,6 +11,7 @@ It runs entirely on the phone. Once installed it works offline, and no patient d
 | index.html | The app |
 | core.js | Form positions, label reader, PDF builder |
 | pdf-lib.min.js | PDF library (pdf-lib 1.17.1, MIT licence) |
+| zxing.min.js | Barcode reader (@zxing/library 0.21.3, Apache 2.0 licence) |
 | consent_form.pdf | The blank SCN020.001 form |
 | form-preview.jpg | Image of the form for the on-screen preview |
 | manifest.webmanifest, sw.js, icon-*.png, apple-touch-icon.png | Home-screen install and offline support |
@@ -30,16 +31,18 @@ The iPhone needs to load the app once from an **https://** address. After that i
 
 ## 3. Use it
 
-1. **Label:** tap the *Label text* box, tap it again and choose **Scan Text** (on iOS 17 and later it may be under **AutoFill**). Point at the label and tap **Insert**. The fields fill in; check every one against the label.
+1. **Barcode:** tap **Scan barcode** and hold the label's barcode in the box (allow camera access the first time), or tap **Barcode from photo**. The barcode usually holds only the MRN.
+2. **Label:** for the name, date of birth and address, tap the *Label text* box, tap it again and choose **Scan Text** (on iOS 17 and later it may be under **AutoFill**). Point at the label and tap **Insert**. The fields fill in; check every one against the label.
    - No Scan Text? Check Settings → General → Language & Region → **Live Text** is on (needs iPhone XS/XR or newer, iOS 15+).
    - Or open the **Camera** app, point at the label, tap the Live Text button, **Select All → Copy**, then tap **Paste** in the app.
-2. **Procedure:** enter it in full, without abbreviations, plus the condition and the date of the operation.
-3. **Sign** with your finger. Open *Preview the form* to check it.
-4. **Send:** tap *Email parent with PDF*, choose Mail or Outlook, and paste the address (Copy button) if it isn't filled in. Repeat for admissions.
-5. Tap **New patient** to clear everything before the next patient.
+3. **Procedure:** enter it in full, without abbreviations, plus the condition and the date of the operation.
+4. **Sign** with your finger. Open *Preview the form* to check it.
+5. **Send:** tap *Email parent with PDF*, choose Mail or Outlook, and paste the address (Copy button) if it isn't filled in. Repeat for admissions.
+6. Tap **New patient** to clear everything before the next patient.
 
 ## Checking before clinical use
 
+- Scan the barcode on a few real CHW labels and note what it holds (MRN alone, or more). If it holds more than the MRN, tell me and the app can fill those fields from it too.
 - Scan 10 real CHW labels and check every field. The label reader was written without a real CHW label to test against, so if a field is often wrong, send me the label text with the details changed and I'll adjust it.
 - Print one filled form and check the text lines up on paper.
 - Confirm with SCHN Privacy that emailing the form to a family's personal address is covered by local policy.

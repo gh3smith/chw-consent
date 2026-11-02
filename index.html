@@ -104,6 +104,13 @@ details.preview[open] summary::after{content:"Hide"}
 .mail details summary{color:var(--accent);font-weight:600;font-size:14px;cursor:pointer}
 .mail pre{white-space:pre-wrap;font:14px/1.5 var(--f-body);margin:8px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .foot{font-size:13px;color:var(--muted);margin:0}
+.scanner{position:fixed;inset:0;z-index:50;background:#000;display:grid}
+.scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scanner .frame{position:absolute;left:8%;right:8%;top:30%;height:30%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);pointer-events:none}
+.scanner .frame::after{content:"";position:absolute;left:6%;right:6%;top:50%;border-top:2px solid #E5484D;opacity:.9}
+.scanbar{position:absolute;left:0;right:0;bottom:0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:12px;color:#fff;text-align:center}
+.scanbar p{margin:0;font-size:16px;text-shadow:0 1px 2px #000}
+.scantop{position:absolute;left:0;right:0;top:0;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 0;color:#fff;text-align:center;font-weight:700;text-shadow:0 1px 2px #000}
 @media (min-width:620px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.s2{grid-column:span 2}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
@@ -125,6 +132,12 @@ details.preview[open] summary::after{content:"Hide"}
   <section class="card" aria-labelledby="h1">
     <h2 id="h1"><span class="n">1</span>Patient label</h2>
     <p class="sub">Tap the box, then tap it again and choose <b>Scan Text</b> (on newer iPhones it is under <b>AutoFill</b>). Point at the label and tap <b>Insert</b>. Or copy the label text with Live Text in the Camera app and tap <b>Paste</b>.</p>
+    <div class="row">
+      <button class="btn primary" id="scanBarcode" type="button">Scan barcode</button>
+      <label class="btn" for="barcodePhoto">Barcode from photo</label>
+      <input type="file" id="barcodePhoto" accept="image/*" capture="environment" hidden>
+    </div>
+    <p class="hint" id="barcodeHint">The barcode usually holds the MRN. Use the label text below for the name, date of birth and address.</p>
     <div class="f">
       <label class="lbl" for="labelText">Label text</label>
       <textarea id="labelText" class="scanbox" rows="4" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here twice, then Scan Text"></textarea>
@@ -134,7 +147,7 @@ details.preview[open] summary::after{content:"Hide"}
     <div class="grid">
       <div class="f s2"><label class="lbl" for="fam">Family name</label><input id="fam" type="text" autocomplete="off" autocapitalize="characters"></div>
       <div class="f s2"><label class="lbl" for="giv">Given name</label><input id="giv" type="text" autocomplete="off" autocapitalize="words"></div>
-      <div class="f"><label class="lbl" for="mrn">MRN</label><input id="mrn" type="text" class="mono" autocomplete="off" inputmode="text"></div>
+      <div class="f"><label class="lbl" for="mrn">MRN</label><input id="mrn" type="text" class="mono" autocomplete="off" inputmode="text"><span class="hint" id="mrnHint"></span></div>
       <div class="f"><label class="lbl" for="dob">Date of birth</label><input id="dob" type="date"><span class="hint" id="ageHint"></span></div>
       <div class="f full s2"><span class="lbl">Sex</span>
         <div class="seg" role="radiogroup" aria-label="Sex">
@@ -211,8 +224,15 @@ details.preview[open] summary::after{content:"Hide"}
   <p class="foot" style="text-align:center">Patient details stay on this phone and are cleared with New patient. <a href="#" id="loadExample" style="color:var(--accent)">Try with an example patient</a></p>
 </div></main>
 
+<div class="scanner" id="scanner" role="dialog" aria-modal="true" aria-label="Barcode scanner" hidden>
+  <video id="scanVideo" playsinline muted autoplay></video>
+  <div class="scantop">Scan the label barcode</div>
+  <div class="frame"></div>
+  <div class="scanbar"><p id="scanMsg">Hold the barcode inside the box, about 15 cm away.</p><button class="btn" id="scanCancel" type="button">Cancel</button></div>
+</div>
 <img id="formImg" src="form-preview.jpg" alt="" hidden>
 <script src="pdf-lib.min.js"></script>
+<script src="zxing.min.js"></script>
 <script src="core.js"></script>
 <script>
 (function(){
@@ -250,8 +270,128 @@ function applyLabel(){
   var miss=["Family name","Given name","MRN","Date of birth"].filter(function(x){return got.indexOf(x)<0});
   $("parseHint").className="hint"+(miss.length?" warn":"");
   $("parseHint").textContent=got.length?(miss.length?"Filled what it could. Type in: "+miss.join(", ")+".":"Filled from the label. Check each field against it."):"Couldn't find patient details in that text. Type them in below.";
-  $("exampleNote").hidden=true;update();
+  $("exampleNote").hidden=true;setMrnHint();update();
 }
+
+/* ---------- barcode ---------- */
+var lastBarcode="",zx=null,scanTimer=null;
+function zxHints(){var Z=ZXing,F=Z.BarcodeFormat,H=new Map();
+  H.set(Z.DecodeHintType.POSSIBLE_FORMATS,[F.CODE_128,F.CODE_39,F.CODE_93,F.CODABAR,F.ITF,F.EAN_13,F.EAN_8,F.UPC_A,F.DATA_MATRIX,F.PDF_417,F.QR_CODE,F.AZTEC]);
+  H.set(Z.DecodeHintType.TRY_HARDER,true);return H}
+function setMrnHint(){
+  var m=v("mrn"),h=$("mrnHint");
+  if(!lastBarcode){h.textContent="";return}
+  var same=m.replace(/[^0-9A-Za-z]/g,"").toUpperCase()===lastBarcode.replace(/[^0-9A-Za-z]/g,"").toUpperCase()||m.replace(/\D/g,"")===lastBarcode.replace(/\D/g,"");
+  h.className="hint"+(same?"":" warn");h.textContent=same?"Matches the barcode.":"Barcode reads "+lastBarcode+". Check the MRN.";
+}
+function gotBarcode(text,fmt){
+  var t=String(text||"").trim();if(!t)return;
+  var richer=/[\^|~\n\r\t]/.test(t)||t.length>24;
+  if(richer){
+    var r=C.parseLabel(t.replace(/[\^|~\t]/g,"\n")),got=[];
+    [["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["a1","Address"],["a2","Suburb"],["mo","M.O."],["ward","Ward"]].forEach(function(p){if(r[p[0]]){$(p[0]).value=r[p[0]];got.push(p[1])}});
+    if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
+    lastBarcode=r.mrn||"";
+    $("barcodeHint").className="hint";$("barcodeHint").textContent="Barcode read: "+t.replace(/[\^|~\n\r\t]+/g," · ")+(got.length?" (filled "+got.join(", ")+")":"");
+  }else{
+    lastBarcode=t;$("mrn").value=t;
+    $("barcodeHint").className="hint";$("barcodeHint").textContent="Barcode read: "+t+" (put in MRN). Add the other details from the label text.";
+  }
+  $("exampleNote").hidden=true;setMrnHint();update();
+}
+var scanStream=null,scanLoop=null,scanBusy=false,scanTick=0;
+function decodeOnce(cv){
+  var Z=ZXing,r=new Z.MultiFormatReader();r.setHints(zxHints());
+  try{return r.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv))))}catch(e){return null}
+}
+/* The browser decoder misses a barcode when a dark area (a desk, a sleeve) sits to its left,
+   so also try with dark margins trimmed off each side. */
+function trimDark(cv){
+  var w=cv.width,h=cv.height;if(w<40||h<10)return null;
+  var data=cv.getContext("2d").getImageData(0,0,w,h).data,col=new Float32Array(w),mx=0;
+  for(var y=0;y<h;y+=2)for(var x=0;x<w;x++){var i=(y*w+x)*4;col[x]+=data[i]*0.3+data[i+1]*0.59+data[i+2]*0.11}
+  for(x=0;x<w;x++)if(col[x]>mx)mx=col[x];
+  var thr=mx*0.8,a=0,b=w-1;while(a<w&&col[a]<thr)a++;while(b>a&&col[b]<thr)b--;
+  if((a<3&&b>w-4)||b-a<w*0.2)return null;
+  var c=document.createElement("canvas");c.width=b-a+1;c.height=h;c.getContext("2d",{willReadFrequently:true}).drawImage(cv,a,0,b-a+1,h,0,0,b-a+1,h);return c;
+}
+function decodeCanvas(cv){var r=decodeOnce(cv);if(r)return r;var t=trimDark(cv);return t?decodeOnce(t):null}
+/* Draw part of a source (image or video frame) into a canvas, scaled so its long side is at most maxSide, optionally turned 90 degrees */
+function grab(src,sw,sh,sx,sy,cw,ch,maxSide,rot){
+  var s=Math.min(1,maxSide/Math.max(cw,ch)),w=Math.max(1,Math.round(cw*s)),h=Math.max(1,Math.round(ch*s)),c=document.createElement("canvas"),x=c.getContext("2d",{willReadFrequently:true});
+  if(rot){c.width=h;c.height=w;x.translate(h/2,w/2);x.rotate(Math.PI/2);x.drawImage(src,sx,sy,cw,ch,-w/2,-h/2,w,h)}
+  else{c.width=w;c.height=h;x.drawImage(src,sx,sy,cw,ch,0,0,w,h)}
+  return c;
+}
+/* Try the whole picture, then overlapping bands across it, in both orientations */
+function findBarcode(src,W,H,budget){
+  var tries=[],t0=Date.now();
+  [0,1].forEach(function(rot){
+    tries.push([0,0,W,H,1600,rot]);
+    var along=rot?W:H; // bands run across the bars
+    [0.5,0.34,0.22].forEach(function(f){
+      var band=Math.round(along*f),step=Math.max(1,Math.round(band/2));
+      for(var o=0;o+band<=along+1;o+=step){if(rot)tries.push([o,0,Math.min(band,W-o),H,1400,1]);else tries.push([0,o,W,Math.min(band,H-o),1400,0])}
+    });
+  });
+  for(var i=0;i<tries.length;i++){
+    var t=tries[i],res=decodeCanvas(grab(src,W,H,t[0],t[1],t[2],t[3],t[4],t[5]));
+    if(res)return res;
+    if(budget&&Date.now()-t0>budget)return null;
+  }
+  return null;
+}
+function stopScan(){
+  clearTimeout(scanTimer);clearInterval(scanLoop);scanLoop=null;
+  if(scanStream){scanStream.getTracks().forEach(function(tr){tr.stop()});scanStream=null}
+  var vid=$("scanVideo");vid.srcObject=null;$("scanner").hidden=true;document.body.style.overflow="";
+}
+$("scanCancel").addEventListener("click",stopScan);
+$("scanBarcode").addEventListener("click",function(){
+  var bh=$("barcodeHint");
+  if(!window.ZXing){bh.className="hint warn";bh.textContent="The barcode reader didn't load. Reopen the app with signal once.";return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){bh.className="hint warn";bh.textContent="The camera only works when the app is opened from its https address. Try Barcode from photo.";return}
+  $("scanMsg").textContent="Hold the barcode inside the box, about 15 cm away.";
+  $("scanner").hidden=false;document.body.style.overflow="hidden";
+  navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}}}).then(function(stream){
+    scanStream=stream;var vid=$("scanVideo");vid.srcObject=stream;vid.setAttribute("playsinline","");
+    return vid.play().catch(function(){});
+  }).then(function(){
+    if(!scanStream)return;
+    scanTimer=setTimeout(function(){$("scanMsg").textContent="Still looking. Hold steady in good light, move a little closer, or cancel and use Barcode from photo."},12000);
+    scanLoop=setInterval(function(){
+      var vid=$("scanVideo");if(scanBusy||!scanStream||vid.readyState<2||!vid.videoWidth)return;
+      scanBusy=true;scanTick++;
+      try{
+        var W=vid.videoWidth,H=vid.videoHeight,res=null;
+        // the guide box: middle of the picture first, then the whole frame now and then
+        var bx=Math.round(W*0.06),bw=W-2*bx,by=Math.round(H*0.25),bh2=Math.round(H*0.5);
+        res=decodeCanvas(grab(vid,W,H,bx,by,bw,bh2,1280,0))||decodeCanvas(grab(vid,W,H,bx,by,bw,bh2,1280,1));
+        if(!res&&scanTick%4===0)res=findBarcode(vid,W,H,180);
+        if(res){var txt=res.getText(),f=res.getBarcodeFormat();stopScan();gotBarcode(txt,f)}
+      }catch(e){}
+      scanBusy=false;
+    },220);
+  }).catch(function(e){
+    stopScan();bh.className="hint warn";
+    bh.textContent=e&&(e.name==="NotAllowedError"||e.name==="SecurityError")?"Camera access was refused. Allow camera access for this site in Settings → Safari → Camera, or use Barcode from photo.":"Couldn't start the camera. Try Barcode from photo.";
+  });
+});
+$("barcodePhoto").addEventListener("change",function(e){
+  var file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
+  var bh=$("barcodeHint");if(!window.ZXing){bh.className="hint warn";bh.textContent="The barcode reader didn't load. Reopen the app with signal once.";return}
+  bh.className="hint";bh.textContent="Reading barcode…";
+  var url=URL.createObjectURL(file),im=new Image();
+  im.onload=function(){setTimeout(function(){
+    var res=findBarcode(im,im.naturalWidth,im.naturalHeight,0);
+    URL.revokeObjectURL(url);
+    if(res)gotBarcode(res.getText(),res.getBarcodeFormat());
+    else{bh.className="hint warn";bh.textContent="No barcode found in that photo. Get the barcode filling more of the picture, sharp and well lit, and try again."}
+  },30)};
+  im.onerror=function(){URL.revokeObjectURL(url);bh.className="hint warn";bh.textContent="That photo couldn't be opened. Try again."};
+  im.src=url;
+});
+$("mrn").addEventListener("input",setMrnHint);
 
 /* ---------- preview ---------- */
 var pv=$("pv"),pctx=pv.getContext("2d"),sigImg=new Image();
@@ -370,6 +510,7 @@ function clearPatient(){
   $("labelText").value="";$("sexU").checked=true;$("dt").value=todayIso();$("tm").value=nowTime();
   $("parseHint").className="hint";$("parseHint").textContent="Nothing leaves this phone. Check every field against the label.";
   strokes.length=0;sigPng=null;sigBytes=null;redrawPad();ready.file=null;ready.key="";
+  lastBarcode="";$("mrnHint").textContent="";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use the label text below for the name, date of birth and address.";
   $("sendStatus").textContent="";$("exampleNote").hidden=true;$("previewBox").open=false;update();window.scrollTo(0,0);
 }
 $("clearAll").addEventListener("click",clearPatient);
