@@ -51,7 +51,7 @@ The iPhone needs to load the app once from an **https://** address. After that i
 
 A tablet/PC layout of the prefill app with a live form preview, at `version2/` (e.g. `https://<your-site>/version2/`). It uses the blank form, preview image and pdf-lib from the main folder.
 
-- **Scan label:** tap the box twice and choose **Scan Text** (or paste Live Text from the Camera app). It fills family name, given name, MRN, date of birth, sex, M.O. and address, and the practitioner name if empty. **Scan barcode** reads the MRN. Everything is read on the phone.
+- **Scan label:** tap the box twice and choose **Scan Text** (or paste Live Text from the Camera app). It fills family name, given name, MRN, date of birth, sex and M.O., and the practitioner name if empty. **Scan barcode** reads the MRN. Everything is read on the phone.
 - The PDF can only leave the app as an email attachment (**Attach PDF to email** opens the share sheet). There is no save-to-device button.
 - One **Copy both email addresses** button copies the admissions and parent addresses together for the To line.
 - Admissions defaults to SCHN-CHW-PatientBookingOffice@health.nsw.gov.au.
