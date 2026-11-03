@@ -204,6 +204,7 @@ main .gut{padding-block:20px 64px}
       <div class="f s2"><label class="lbl" for="parEmail">Parent email</label><input id="parEmail" type="email" inputmode="email"></div>
       <div class="f s2"><label class="lbl" for="admEmail">Admissions email</label><input id="admEmail" type="email" inputmode="email"></div>
     </div>
+    <div class="note warn" id="stillNeeded" style="margin-top:16px"></div>
     <div class="row" style="margin-top:16px">
       <button class="btn" id="copyAddr" type="button">Copy both email addresses</button>
       <button class="btn primary" id="emailPdf" type="button" disabled>Attach PDF to email</button>
@@ -528,9 +529,12 @@ function update(){
   const overs=it.text.filter(t=>t.over&&t.k!=="proc1"&&t.k!=="proc3").map(t=>t.k);
   $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
   $("termsHint").className="hint"+(overs.includes("terms")?" warn":"");$("termsHint").textContent=overs.includes("terms")?"The tissue terms are too long for the line on the form. Shorten them.":"Tick or untick each box to match what the family agrees to.";
-  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Practitioner signature",strokes.length>0]];
+  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Parent email",val("parEmail")],["Practitioner signature",strokes.length>0]];
   $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
   const ready=need.every(n=>n[1])&&templateBytes&&font;
+  const missing=need.filter(n=>!n[1]).map(n=>n[0]);const sn=$("stillNeeded");
+  sn.className="note "+(missing.length?"warn":"ok");
+  sn.innerHTML=missing.length?`<p><b>Still needed before the form can be emailed:</b></p><ul style="margin:6px 0 0;padding-left:20px">${missing.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`:(templateBytes&&font?"<p><b>Ready to email.</b></p>":"<p>Loading the blank form…</p>");
   $("emailPdf").disabled=!ready;
   emails();drawPreview();
 }
