@@ -47,6 +47,17 @@ The iPhone needs to load the app once from an **https://** address. After that i
 - Print one filled form and check the text lines up on paper.
 - Confirm with SCHN Privacy that emailing the form to a family's personal address is covered by local policy.
 
+## Version 3 (version3/)
+
+The current version, at `version3/` (https://gh3smith.github.io/chw-consent/version3/). Same as version 2, plus:
+
+- **Medical practitioner** (the doctor explaining and taking consent) is free text, starts blank and is optional. It fills all three practitioner name boxes. **M.O.** (consultant in charge) comes from the label and stays separate.
+- One **Procedure or treatment** entry prints in both the practitioner and parent sections.
+- **Date of operation** is optional. The ward and address fields are removed.
+- "I request and consent", "I consent to anaesthetics" and "I consent to patient photography" are crossed by default; the two tissue consent boxes start unticked, with optional **Terms for tissue use**.
+- Admissions always defaults to SCHN-CHW-PatientBookingOffice@health.nsw.gov.au.
+- `version3/CHW_Consent_Prefill_version3.html` is the single-file copy for Microsoft Edge on a Windows PC.
+
 ## Version 2 (version2/)
 
 A tablet/PC layout of the prefill app with a live form preview, at `version2/` (e.g. `https://<your-site>/version2/`). It uses the blank form, preview image and pdf-lib from the main folder.
