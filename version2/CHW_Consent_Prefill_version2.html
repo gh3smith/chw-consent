@@ -312,14 +312,24 @@ function emails(){
 
 Attached is the consent form for ${child}'s operation (${op}) at The Children's Hospital at Westmead on ${sd}.
 
-Please:
+${val("prac")||"The surgeon"} has already filled in the top section, which records what was discussed with you. Please read the form, then in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, print your name and sign. You can do this in either of two ways.
+
+OPTION 1 – Sign on your iPhone and email it back
+1. In this email, tap the attached form to open it.
+2. Tap the Markup button (the pen icon).
+3. Tap +, then Add Text, to tick the boxes you agree to (type an X) and print your name. Drag each one into place.
+4. Tap +, then Add Signature, sign with your finger and drag the signature onto the signature line.
+5. Tap Done, then choose Reply All. The signed form is attached to your reply. Send it.
+On an Android phone or a computer, you can do the same with the free Adobe Acrobat Reader app (Fill & Sign), then reply to this email with the signed form attached.
+
+OPTION 2 – Print and sign on paper
 1. Print the form (one page).
-2. Read it, and in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, then print your name and sign.
+2. Tick the boxes you agree to, print your name and sign.
 3. Bring the signed form with you on the day of the operation.
 
-${val("prac")||"The surgeon"} has already filled in the top section, which records what was discussed with you. If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.
+If you can't do either, let the nurses know when you arrive and a copy will be ready for you to sign.
 
-If you can't print the form, let the nurses know when you arrive and a copy will be ready for you.
+If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.
 
 Kind regards,
 ${val("prac")||"[Practitioner]"}
