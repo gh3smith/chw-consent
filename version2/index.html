@@ -165,7 +165,7 @@ main .gut{padding-block:20px 64px}
     <h2 id="h2"><span class="n">2</span>Procedure</h2>
     <p class="sub">The medical practitioner is the doctor explaining the procedure and taking consent. Their name goes in all three practitioner name boxes on the form. The form asks for no abbreviations.</p>
     <div class="grid">
-      <div class="f s3"><label class="lbl" for="prac">Medical practitioner (explains and takes consent)</label><input id="prac" type="text" autocomplete="off"></div>
+      <div class="f s3"><label class="lbl" for="prac">Medical practitioner (explains and takes consent)</label><input id="prac" type="text" autocomplete="off" placeholder="Type the name, or leave blank"></div>
       <div class="f s3"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
       <div class="f s6"><label class="lbl" for="proc">Procedure or treatment</label><textarea id="proc" placeholder="e.g. Right inguinal orchidopexy"></textarea><span class="hint" id="procHint"></span></div>
       <div class="f s6"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint" id="condHint"></span></div>
@@ -328,7 +328,7 @@ function update(){
   $("procHint").textContent=!val("proc")?"Printed in both the practitioner and parent sections of the form.":it.procLineOver?"Too long for the one line in the parent section. Shorten it.":it.procOver?"Too long for the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits in both sections of the form.";
   const overs=it.text.filter(t=>t.over&&t.k!=="proc1"&&t.k!=="proc3").map(t=>t.k);
   $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
-  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Practitioner signature",strokes.length>0]];
+  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Practitioner signature",strokes.length>0]];
   $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
   const ready=need.every(n=>n[1])&&templateBytes&&font;
   $("emailPdf").disabled=!ready;
@@ -345,7 +345,7 @@ function emails(){
 
 Attached is the consent form for ${child}'s operation (${op}) at The Children's Hospital at Westmead${onSd}.
 
-${val("prac")||"The surgeon"} has already filled in the top section, which records what was discussed with you. Please read the form, then in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, print your name and sign. You can do this in either of two ways.
+${val("prac")||"The doctor"} has already filled in the top section, which records what was discussed with you. Please read the form, then in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, print your name and sign. You can do this in either of two ways.
 
 OPTION 1 – Sign on your iPhone and email it back
 1. In this email, tap the attached form to open it.
@@ -365,8 +365,7 @@ If you can't do either, let the nurses know when you arrive and a copy will be r
 If you have questions, or anything has changed, please contact us before the day. You can change your mind at any time before the operation.
 
 Kind regards,
-${val("prac")||"[Practitioner]"}
-Division of Surgery
+${val("prac")?val("prac")+"\n":""}Division of Surgery
 The Children's Hospital at Westmead
 
 ---
@@ -582,13 +581,13 @@ function today(){const d=new Date();return d.toISOString().slice(0,10)}
 function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 function loadExample(){for(const[k,v]of Object.entries(EXAMPLE)){if(k==="sex"){$(v==="M"?"sexM":"sexF").checked=true}else if($(k))$(k).value=v}
   const d=new Date();d.setDate(d.getDate()+21);$("surg").value=d.toISOString().slice(0,10);$("exampleNote").hidden=false}
-function clearAll(){for(const id of ids){if(["prac","fac","admEmail","dt","tm"].includes(id))continue;$(id).value=""}
+function clearAll(){for(const id of ids){if(["fac","admEmail","dt","tm"].includes(id))continue;$(id).value=""}
   for(const k of["xReq","xAnaes","xPhoto"])$(k).checked=true;
-  $("sexU").checked=true;$("prac").value=store.get("prac");$("dt").value=today();$("tm").value=nowTime();
+  $("sexU").checked=true;$("dt").value=today();$("tm").value=nowTime();
   strokes.length=0;sigPng=null;redrawPad();if(!val("admEmail"))$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";$("labelText").value="";lastBarcode="";$("parseHint").className="hint";$("parseHint").textContent="Read on this device. Check every field against the label.";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.";update();window.scrollTo({top:0})}
 $("clearAll").onclick=clearAll;
 
-for(const id of ids)$(id).addEventListener("input",()=>{if(id==="prac")store.set("prac",val("prac"));if(id==="admEmail")store.set("admEmail",val("admEmail"));if(id==="mrn")setMrnHint();update()});
+for(const id of ids)$(id).addEventListener("input",()=>{if(id==="admEmail")store.set("admEmail",val("admEmail"));if(id==="mrn")setMrnHint();update()});
 document.querySelectorAll('input[name=sex]').forEach(r=>r.addEventListener("change",update));
 $("tickAge").addEventListener("change",update);
 for(const k of["xReq","xAnaes","xPhoto"])$(k).addEventListener("change",update);
@@ -597,7 +596,7 @@ img.addEventListener("load",drawPreview);
 $("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
 const ADM_DEFAULT="SCHN-CHW-PatientBookingOffice@health.nsw.gov.au";
 $("admEmail").value=store.get("admEmail")||ADM_DEFAULT;
-$("prac").value=store.get("prac");$("sexU").checked=true;
+$("sexU").checked=true;
 sizePad();window.addEventListener("resize",()=>{sizePad()});
 update();
 
