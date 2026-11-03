@@ -208,6 +208,7 @@ main .gut{padding-block:20px 64px}
     <div class="row" style="margin-top:16px">
       <button class="btn" id="copyAddr" type="button">Copy both email addresses</button>
       <button class="btn primary" id="emailPdf" type="button" disabled>Attach PDF to email</button>
+      <button class="btn" id="testEmail" type="button" disabled>Test email to parent</button>
     </div>
     <div class="status" id="sendStatus" style="margin-top:8px"></div>
     <div class="mail" style="margin-top:12px">
@@ -340,6 +341,7 @@ function update(){
   sn.className="note "+(missing.length?"warn":"ok");
   sn.innerHTML=missing.length?`<p><b>Still needed before the form can be emailed:</b></p><ul style="margin:6px 0 0;padding-left:20px">${missing.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`:(templateBytes&&font?"<p><b>Ready to email.</b></p>":"<p>Loading the blank form…</p>");
   $("emailPdf").disabled=!ready;
+  $("testEmail").disabled=!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("parEmail"));
   emails();drawPreview();
 }
 
@@ -427,6 +429,28 @@ async function buildPdf(){
   return await doc.save();
 }
 function fileName(){const s=val("surg").replace(/-/g,"");return `Consent_${winAnsi(val("fam")).toUpperCase().replace(/[^A-Z0-9]+/g,"")}_${val("mrn").replace(/[^A-Za-z0-9]+/g,"")}_${s||"undated"}.pdf`}
+/* Test email: a short message to the parent only, to check the address, no attachment */
+function testMail(){
+  const par=val("parName")?val("parName").split(" ")[0]:"",child=val("giv")||"your child";
+  const s="Test email from The Children's Hospital at Westmead";
+  const body=`Dear ${par||"Parent or guardian"},
+
+This is a test email to check that we have your email address correct. We will send ${child}'s consent form to this address.
+
+Please reply to this email to let us know you received it. You don't need to do anything else.
+
+Kind regards,
+${val("prac")?val("prac")+"\n":""}Division of Surgery
+The Children's Hospital at Westmead`;
+  return{to:val("parEmail"),s,body};
+}
+$("testEmail").onclick=()=>{
+  const m=testMail();if(!m.to){status("Enter the parent's email first.");return}
+  status("Opening your email app with a test message to "+m.to+". Check it and tap Send.",true);
+  location.href="mailto:"+encodeURIComponent(m.to).replace(/%40/g,"@")+"?subject="+encodeURIComponent(m.s)+"&body="+encodeURIComponent(m.body);
+};
+$("parEmail").addEventListener("input",()=>{$("testEmail").disabled=!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("parEmail"))});
+
 /* The PDF only leaves the page as an email attachment via the device's share sheet. It is never written to disk by this page. */
 $("emailPdf").onclick=async()=>{
   status("Building PDF…",true);

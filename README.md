@@ -56,6 +56,7 @@ The current version, at `version3/` (https://gh3smith.github.io/chw-consent/vers
 - **Date of operation** is optional. The ward and address fields are removed.
 - "I request and consent", "I consent to anaesthetics" and "I consent to patient photography" are crossed by default; the two tissue consent boxes start unticked, with optional **Terms for tissue use**.
 - Admissions always defaults to SCHN-CHW-PatientBookingOffice@health.nsw.gov.au.
+- **Test email to parent** opens your email app with a short test message to the parent (no attachment), to check the address before sending the form.
 - `version3/CHW_Consent_Prefill_version3.html` is the single-file copy for Microsoft Edge on a Windows PC.
 
 ## Version 2 (version2/)
