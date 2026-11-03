@@ -155,8 +155,7 @@ main .gut{padding-block:20px 64px}
           <label><input type="radio" name="sex" value="F" id="sexF">Female</label>
           <label><input type="radio" name="sex" value="" id="sexU">Not stated</label>
         </div></div>
-      <div class="f s3"><label class="lbl" for="mo">M.O. (consultant in charge)</label><input id="mo" type="text" autocomplete="off"></div>
-      <div class="f s3"><label class="lbl" for="ward">Location / ward</label><input id="ward" type="text" autocomplete="off"></div>
+      <div class="f s6"><label class="lbl" for="mo">M.O. (consultant in charge)</label><input id="mo" type="text" autocomplete="off"></div>
     </div>
   </section>
 
@@ -256,7 +255,7 @@ const FS=9, FS_MIN=6.5;
 let font=null, img=$("formImg"), templateBytes=null;
 const strokes=[]; let sigPng=null;
 
-const EXAMPLE={fam:"NGUYEN",giv:"Oliver",mrn:"0000-4417",dob:"2022-03-14",sex:"M",mo:"Dr Henry Example",ward:"Urology Clinic",
+const EXAMPLE={fam:"NGUYEN",giv:"Oliver",mrn:"0000-4417",dob:"2022-03-14",sex:"M",mo:"Dr Henry Example",
  prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
  cond:"Right undescended testis",parName:"Linh Nguyen",parEmail:"parent@example.com"};
 
@@ -273,7 +272,7 @@ function wrap2(t,w){ // split into up to 2 lines, shrinking font if needed
 function abbrevs(t){const m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return [...new Set(m.filter(x=>!["NSW","CHW","SCHN","MRN","DOB"].includes(x)))]}
 
 /* ---------- state from inputs ---------- */
-const ids=["fam","giv","mrn","dob","mo","ward","prac","fac","proc","cond","dt","tm","surg","interp","parName","parEmail","admEmail"];
+const ids=["fam","giv","mrn","dob","mo","prac","fac","proc","cond","dt","tm","surg","interp","parName","parEmail","admEmail"];
 function val(id){return $(id).value.trim()}
 function sex(){const r=document.querySelector('input[name=sex]:checked');return r?r.value:""}
 function age(){const d=val("dob");if(!d)return null;const b=new Date(d+"T00:00:00"),ref=val("dt")?new Date(val("dt")+"T00:00:00"):new Date();let a=ref.getFullYear()-b.getFullYear();if(ref<new Date(ref.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
@@ -287,7 +286,7 @@ function items(){
   const out=[];const add=(k,t)=>{t=winAnsi(t);if(!t)return;const f=fit(t,L[k].w);out.push({k,t,x:L[k].x,y:L[k].y,s:f.s,over:f.over})};
   add("fam",val("fam").toUpperCase());add("giv",val("giv"));add("mrn",val("mrn"));
   const d=val("dob");if(d){const[y,m,dd]=d.split("-");add("dd",dd);add("mm",m);add("yy",y)}
-  add("mo",val("mo"));add("ward",val("ward"));add("fac",val("fac"));
+  add("mo",val("mo"));add("fac",val("fac"));
   add("prac1",val("prac"));add("pracPrint",val("prac"));add("prac2",val("prac"));
   const w=wrap2(val("proc"),L.proc1.w);if(w.lines[0])out.push({k:"proc1",t:w.lines[0],x:L.proc1.x,y:L.proc1.y,s:w.s,over:w.over});if(w.lines[1])out.push({k:"proc2l",t:w.lines[1],x:L.proc2l.x,y:L.proc2l.y,s:w.s,over:false});
   if(val("proc")){add("dt",ausDate(val("dt")));add("tm",val("tm"))}
@@ -437,7 +436,7 @@ $("emailPdf").onclick=async()=>{
 
 /* ---------- scan label (iPhone Scan Text / Live Text) ---------- */
 const CORE=window.ConsentCore;
-const LABEL_MAP=[["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["mo","M.O."],["ward","Ward"]];
+const LABEL_MAP=[["fam","Family name"],["giv","Given name"],["mrn","MRN"],["dob","Date of birth"],["mo","M.O."]];
 function fillFromParsed(r){
   const got=[];
   for(const[k,n]of LABEL_MAP){const v=k==="mo"?r.amo:r[k];if(v){$(k).value=v;got.push(n)}}
@@ -557,12 +556,12 @@ $("labelPhoto").addEventListener("change",async e=>{
   try{
     const r=await sample.json(`This photo shows a patient identification label from a NSW children's hospital. Read only what is printed on it.
 Reply with only this JSON object, using "" for anything not printed on the label (never guess):
-{"familyName":"","givenName":"","mrn":"","dob":"YYYY-MM-DD","sex":"M or F or empty","mo":"admitting medical officer (AMO) name if printed","ward":"location or ward if printed"}
+{"familyName":"","givenName":"","mrn":"","dob":"YYYY-MM-DD","sex":"M or F or empty","mo":"admitting medical officer (AMO) name if printed"}
 Australian dates are day/month/year.`,{images:file,cache:false});
     const set=(id,v)=>{if(typeof v==="string"&&v.trim())$(id).value=v.trim()};
     set("fam",r.familyName);set("giv",r.givenName?titleCase(r.givenName):"");set("mrn",r.mrn);
     if(/^\d{4}-\d{2}-\d{2}$/.test(r.dob||""))$("dob").value=r.dob;
-    set("mo",r.mo);set("ward",r.ward);
+    set("mo",r.mo);
     if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
     $("exampleNote").hidden=true;
     st.textContent="Label read. Check each field against the label.";
@@ -581,13 +580,13 @@ function today(){const d=new Date();return d.toISOString().slice(0,10)}
 function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 function loadExample(){for(const[k,v]of Object.entries(EXAMPLE)){if(k==="sex"){$(v==="M"?"sexM":"sexF").checked=true}else if($(k))$(k).value=v}
   const d=new Date();d.setDate(d.getDate()+21);$("surg").value=d.toISOString().slice(0,10);$("exampleNote").hidden=false}
-function clearAll(){for(const id of ids){if(["fac","admEmail","dt","tm"].includes(id))continue;$(id).value=""}
+function clearAll(){for(const id of ids){if(["fac","dt","tm"].includes(id))continue;$(id).value=""}
   for(const k of["xReq","xAnaes","xPhoto"])$(k).checked=true;
   $("sexU").checked=true;$("dt").value=today();$("tm").value=nowTime();
-  strokes.length=0;sigPng=null;redrawPad();if(!val("admEmail"))$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";$("labelText").value="";lastBarcode="";$("parseHint").className="hint";$("parseHint").textContent="Read on this device. Check every field against the label.";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.";update();window.scrollTo({top:0})}
+  strokes.length=0;sigPng=null;redrawPad();$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";$("labelText").value="";lastBarcode="";$("parseHint").className="hint";$("parseHint").textContent="Read on this device. Check every field against the label.";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.";update();window.scrollTo({top:0})}
 $("clearAll").onclick=clearAll;
 
-for(const id of ids)$(id).addEventListener("input",()=>{if(id==="admEmail")store.set("admEmail",val("admEmail"));if(id==="mrn")setMrnHint();update()});
+for(const id of ids)$(id).addEventListener("input",()=>{if(id==="mrn")setMrnHint();update()});
 document.querySelectorAll('input[name=sex]').forEach(r=>r.addEventListener("change",update));
 $("tickAge").addEventListener("change",update);
 for(const k of["xReq","xAnaes","xPhoto"])$(k).addEventListener("change",update);
@@ -595,7 +594,7 @@ img.addEventListener("load",drawPreview);
 
 $("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
 const ADM_DEFAULT="SCHN-CHW-PatientBookingOffice@health.nsw.gov.au";
-$("admEmail").value=store.get("admEmail")||ADM_DEFAULT;
+$("admEmail").value=ADM_DEFAULT;
 $("sexU").checked=true;
 sizePad();window.addEventListener("resize",()=>{sizePad()});
 update();
