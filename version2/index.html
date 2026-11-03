@@ -155,7 +155,7 @@ main .gut{padding-block:20px 64px}
           <label><input type="radio" name="sex" value="F" id="sexF">Female</label>
           <label><input type="radio" name="sex" value="" id="sexU">Not stated</label>
         </div></div>
-      <div class="f s3"><label class="lbl" for="mo">M.O. (admitting doctor)</label><input id="mo" type="text" autocomplete="off"></div>
+      <div class="f s3"><label class="lbl" for="mo">M.O. (consultant in charge)</label><input id="mo" type="text" autocomplete="off"></div>
       <div class="f s3"><label class="lbl" for="ward">Location / ward</label><input id="ward" type="text" autocomplete="off"></div>
     </div>
   </section>
@@ -163,19 +163,25 @@ main .gut{padding-block:20px 64px}
   <!-- 2 PROCEDURE -->
   <section class="card" aria-labelledby="h2">
     <h2 id="h2"><span class="n">2</span>Procedure</h2>
-    <p class="sub">Fills the practitioner section and the procedure lines of the parent section. The form asks for no abbreviations.</p>
+    <p class="sub">The medical practitioner is the doctor explaining the procedure and taking consent. Their name goes in all three practitioner name boxes on the form. The form asks for no abbreviations.</p>
     <div class="grid">
-      <div class="f s3"><label class="lbl" for="prac">Practitioner name</label><input id="prac" type="text" autocomplete="off"></div>
+      <div class="f s3"><label class="lbl" for="prac">Medical practitioner (explains and takes consent)</label><input id="prac" type="text" autocomplete="off"></div>
       <div class="f s3"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
       <div class="f s6"><label class="lbl" for="proc">Procedure or treatment, and reasons</label><textarea id="proc"></textarea><span class="hint" id="procHint"></span></div>
       <div class="f s6"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint" id="condHint"></span></div>
       <div class="f s6"><label class="lbl" for="proc2">Procedure, as written in the parent section</label><input id="proc2" type="text"><span class="hint" id="proc2Hint">Short name of the operation, e.g. Right inguinal orchidopexy.</span></div>
       <div class="f s2"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
       <div class="f s2"><label class="lbl" for="tm">Time</label><input id="tm" type="time"></div>
-      <div class="f s2"><label class="lbl" for="surg">Date of operation</label><input id="surg" type="date"></div>
+      <div class="f s2"><label class="lbl" for="surg">Date of operation (optional)</label><input id="surg" type="date"></div>
       <div class="f s3"><label class="lbl" for="interp">Interpreter present (name)</label><input id="interp" type="text" placeholder="Leave blank if none"></div>
       <div class="f s3"><span class="lbl">Patient age box</span>
         <label style="display:flex;gap:8px;align-items:center;padding-top:6px"><input type="checkbox" id="tickAge" checked style="width:20px;height:20px;accent-color:var(--accent)"><span id="ageBoxText">Tick from date of birth</span></label></div>
+      <div class="f s6"><span class="lbl">Consent boxes crossed on the form</span>
+        <div class="stack" style="display:grid;gap:6px;padding-top:4px">
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xReq" checked style="width:20px;height:20px;accent-color:var(--accent)">I request and consent to the procedure/treatment</label>
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xAnaes" checked style="width:20px;height:20px;accent-color:var(--accent)">I consent to anaesthetics, medicines or other treatment</label>
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xPhoto" checked style="width:20px;height:20px;accent-color:var(--accent)">I consent to patient photography</label>
+        </div><span class="hint">Untick any the family does not agree to.</span></div>
     </div>
   </section>
 
@@ -245,7 +251,7 @@ const L={
  pracPrint:{x:62,y:225,w:212},dt:{x:457,y:225,w:48},tm:{x:517,y:225,w:42},interp:{x:151,y:247,w:130},
  prac2:{x:62,y:283,w:205},pt:{x:354,y:283,w:210},cond:{x:62,y:308,w:508},proc3:{x:62,y:334,w:508},
  sig:{x:281,y:207,w:170,h:21},
- male:{x:470.6,y:35.3},female:{x:513.8,y:35.3},u14:{x:112.6,y:467.3},a14:{x:180.5,y:467.3},a16:{x:240,y:467.3}
+ male:{x:470.6,y:35.3},female:{x:513.8,y:35.3},u14:{x:112.6,y:467.3},a14:{x:180.5,y:467.3},a16:{x:240,y:467.3},xReq:{x:64.2,y:481.9},xAnaes:{x:64.2,y:494.2},xPhoto:{x:64.2,y:506.0}
 };
 const FS=9, FS_MIN=6.5;
 let font=null, img=$("formImg"), templateBytes=null;
@@ -289,6 +295,7 @@ function items(){
   add("interp",val("interp"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc2"));
   const ticks=[];const sx=sex();if(sx==="M")ticks.push("male");if(sx==="F")ticks.push("female");
   const ab=ageBox();if($("tickAge").checked&&ab)ticks.push(ab);
+  for(const k of["xReq","xAnaes","xPhoto"])if($(k).checked)ticks.push(k);
   return{text:out,ticks,procOver:w.over};
 }
 
@@ -321,7 +328,7 @@ function update(){
   $("procHint").textContent=it.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits on the form's two lines.";
   const overs=it.text.filter(t=>t.over&&t.k!=="proc1").map(t=>t.k);
   $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
-  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure and reasons",val("proc")&&!it.procOver],["Condition",val("cond")],["Procedure for parent section",val("proc2")],["Date of operation",val("surg")],["Practitioner signature",strokes.length>0]];
+  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure and reasons",val("proc")&&!it.procOver],["Condition",val("cond")],["Procedure for parent section",val("proc2")],["Practitioner signature",strokes.length>0]];
   $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
   const ready=need.every(n=>n[1])&&templateBytes&&font;
   $("emailPdf").disabled=!ready;
@@ -329,13 +336,14 @@ function update(){
 }
 
 /* ---------- emails ---------- */
-function longDate(d){if(!d)return"[date of operation]";return new Date(d+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+function longDate(d){if(!d)return"";return new Date(d+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
 function emails(){
   const child=val("giv")||"your child",pn=patientName()||"[patient]",par=val("parName")?val("parName").split(" ")[0]:"",op=val("proc2")||"[procedure]",sd=longDate(val("surg"));
-  const m1s=`Consent form for ${child}'s operation on ${sd}`;
+  const onSd=sd?` on ${sd}`:"";
+  const m1s=`Consent form for ${child}'s operation${onSd}`;
   const m1b=`Dear ${par||"Parent or guardian"},
 
-Attached is the consent form for ${child}'s operation (${op}) at The Children's Hospital at Westmead on ${sd}.
+Attached is the consent form for ${child}'s operation (${op}) at The Children's Hospital at Westmead${onSd}.
 
 ${val("prac")||"The surgeon"} has already filled in the top section, which records what was discussed with you. Please read the form, then in the "Patient/Parent/Guardian Consent" section tick the boxes you agree to, print your name and sign. You can do this in either of two ways.
 
@@ -364,7 +372,7 @@ The Children's Hospital at Westmead
 ---
 For Admissions: please file this copy (SCN020.001, practitioner section completed and signed) for the admission.
 Patient: ${pn} · MRN ${val("mrn")} · DOB ${ausDate(val("dob"))}
-Procedure: ${op} · Date of operation: ${val("surg")?ausDate(val("surg")):""}`;
+Procedure: ${op}${val("surg")?" · Date of operation: "+ausDate(val("surg")):""}`;
   $("mto").innerHTML=`<span class="lbl">To</span> ${esc(addrs()||"no email addresses entered")}`;
   $("msub").textContent=m1s;$("mbody").textContent=m1b;
   emails.data={s:m1s,b:m1b};
@@ -435,7 +443,6 @@ function fillFromParsed(r){
   const got=[];
   for(const[k,n]of LABEL_MAP){const v=k==="mo"?r.amo:r[k];if(v){$(k).value=v;got.push(n)}}
   if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
-  if(!val("prac")&&r.amo)$("prac").value=r.amo;
   return got;
 }
 let parseTimer=null;
@@ -576,6 +583,7 @@ function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,"0"
 function loadExample(){for(const[k,v]of Object.entries(EXAMPLE)){if(k==="sex"){$(v==="M"?"sexM":"sexF").checked=true}else if($(k))$(k).value=v}
   const d=new Date();d.setDate(d.getDate()+21);$("surg").value=d.toISOString().slice(0,10);$("exampleNote").hidden=false}
 function clearAll(){for(const id of ids){if(["prac","fac","admEmail","dt","tm"].includes(id))continue;$(id).value=""}
+  for(const k of["xReq","xAnaes","xPhoto"])$(k).checked=true;
   $("sexU").checked=true;$("prac").value=store.get("prac");$("dt").value=today();$("tm").value=nowTime();
   strokes.length=0;sigPng=null;redrawPad();if(!val("admEmail"))$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";$("labelText").value="";lastBarcode="";$("parseHint").className="hint";$("parseHint").textContent="Read on this device. Check every field against the label.";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.";update();window.scrollTo({top:0})}
 $("clearAll").onclick=clearAll;
@@ -583,6 +591,7 @@ $("clearAll").onclick=clearAll;
 for(const id of ids)$(id).addEventListener("input",()=>{if(id==="prac")store.set("prac",val("prac"));if(id==="admEmail")store.set("admEmail",val("admEmail"));if(id==="mrn")setMrnHint();update()});
 document.querySelectorAll('input[name=sex]').forEach(r=>r.addEventListener("change",update));
 $("tickAge").addEventListener("change",update);
+for(const k of["xReq","xAnaes","xPhoto"])$(k).addEventListener("change",update);
 img.addEventListener("load",drawPreview);
 
 $("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
