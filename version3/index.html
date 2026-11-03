@@ -431,16 +431,14 @@ async function buildPdf(){
 function fileName(){const s=val("surg").replace(/-/g,"");return `Consent_${winAnsi(val("fam")).toUpperCase().replace(/[^A-Z0-9]+/g,"")}_${val("mrn").replace(/[^A-Za-z0-9]+/g,"")}_${s||"undated"}.pdf`}
 /* Test email: a short message to the parent only, to check the address, no attachment */
 function testMail(){
-  const par=val("parName")?val("parName").split(" ")[0]:"",child=val("giv")||"your child";
+  const par=val("parName")?val("parName").split(" ")[0]:"";
   const s="Test email from The Children's Hospital at Westmead";
   const body=`Dear ${par||"Parent or guardian"},
 
-This is a test email to check that we have your email address correct. We will send ${child}'s consent form to this address.
-
-Please reply to this email to let us know you received it. You don't need to do anything else.
+This is a test email to check that we have your email address correct.
 
 Kind regards,
-${val("prac")?val("prac")+"\n":""}Division of Surgery
+Division of Surgery
 The Children's Hospital at Westmead`;
   return{to:val("parEmail"),s,body};
 }
