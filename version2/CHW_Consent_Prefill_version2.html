@@ -113,7 +113,7 @@ main .gut{padding-block:20px 64px}
 <div class="layout">
 <div class="col">
 
-  <div class="note warn example" id="exampleNote"><p><b>Example patient filled in.</b> These are not real details. Clear before using with a patient.</p></div>
+  <div class="note warn example" id="exampleNote" hidden><p><b>Example patient filled in.</b> These are not real details. Clear before using with a patient.</p></div>
 
   <!-- 1 PATIENT -->
   <section class="card" aria-labelledby="h1">
@@ -452,7 +452,7 @@ img.addEventListener("load",drawPreview);
 $("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
 const ADM_DEFAULT="SCHN-CHW-PatientBookingOffice@health.nsw.gov.au";
 $("admEmail").value=store.get("admEmail")||ADM_DEFAULT;
-loadExample();
+$("prac").value=store.get("prac");$("sexU").checked=true;
 sizePad();window.addEventListener("resize",()=>{sizePad()});
 update();
 
