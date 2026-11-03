@@ -167,9 +167,8 @@ main .gut{padding-block:20px 64px}
     <div class="grid">
       <div class="f s3"><label class="lbl" for="prac">Medical practitioner (explains and takes consent)</label><input id="prac" type="text" autocomplete="off"></div>
       <div class="f s3"><label class="lbl" for="fac">Facility</label><input id="fac" type="text"></div>
-      <div class="f s6"><label class="lbl" for="proc">Procedure or treatment, and reasons</label><textarea id="proc"></textarea><span class="hint" id="procHint"></span></div>
+      <div class="f s6"><label class="lbl" for="proc">Procedure or treatment</label><textarea id="proc" placeholder="e.g. Right inguinal orchidopexy"></textarea><span class="hint" id="procHint"></span></div>
       <div class="f s6"><label class="lbl" for="cond">Medical condition requiring treatment</label><input id="cond" type="text"><span class="hint" id="condHint"></span></div>
-      <div class="f s6"><label class="lbl" for="proc2">Procedure, as written in the parent section</label><input id="proc2" type="text"><span class="hint" id="proc2Hint">Short name of the operation, e.g. Right inguinal orchidopexy.</span></div>
       <div class="f s2"><label class="lbl" for="dt">Date signed</label><input id="dt" type="date"></div>
       <div class="f s2"><label class="lbl" for="tm">Time</label><input id="tm" type="time"></div>
       <div class="f s2"><label class="lbl" for="surg">Date of operation (optional)</label><input id="surg" type="date"></div>
@@ -259,7 +258,7 @@ const strokes=[]; let sigPng=null;
 
 const EXAMPLE={fam:"NGUYEN",giv:"Oliver",mrn:"0000-4417",dob:"2022-03-14",sex:"M",mo:"Dr Henry Example",ward:"Urology Clinic",
  prac:"Dr Henry Example",proc:"Right inguinal orchidopexy (bringing the right testis down into the scrotum) because the testis has not descended. Surgery lowers the risk of reduced fertility and allows the testis to be checked.",
- cond:"Right undescended testis",proc2:"Right inguinal orchidopexy",parName:"Linh Nguyen",parEmail:"parent@example.com"};
+ cond:"Right undescended testis",parName:"Linh Nguyen",parEmail:"parent@example.com"};
 
 /* ---------- text helpers ---------- */
 function winAnsi(s){return String(s||"").replace(/[đĐ]/g,c=>c==="đ"?"d":"D").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/[^\x20-\x7E\xA0-\xFF]/g,"?")}
@@ -274,7 +273,7 @@ function wrap2(t,w){ // split into up to 2 lines, shrinking font if needed
 function abbrevs(t){const m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return [...new Set(m.filter(x=>!["NSW","CHW","SCHN","MRN","DOB"].includes(x)))]}
 
 /* ---------- state from inputs ---------- */
-const ids=["fam","giv","mrn","dob","mo","ward","prac","fac","proc","cond","proc2","dt","tm","surg","interp","parName","parEmail","admEmail"];
+const ids=["fam","giv","mrn","dob","mo","ward","prac","fac","proc","cond","dt","tm","surg","interp","parName","parEmail","admEmail"];
 function val(id){return $(id).value.trim()}
 function sex(){const r=document.querySelector('input[name=sex]:checked');return r?r.value:""}
 function age(){const d=val("dob");if(!d)return null;const b=new Date(d+"T00:00:00"),ref=val("dt")?new Date(val("dt")+"T00:00:00"):new Date();let a=ref.getFullYear()-b.getFullYear();if(ref<new Date(ref.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
@@ -292,11 +291,12 @@ function items(){
   add("prac1",val("prac"));add("pracPrint",val("prac"));add("prac2",val("prac"));
   const w=wrap2(val("proc"),L.proc1.w);if(w.lines[0])out.push({k:"proc1",t:w.lines[0],x:L.proc1.x,y:L.proc1.y,s:w.s,over:w.over});if(w.lines[1])out.push({k:"proc2l",t:w.lines[1],x:L.proc2l.x,y:L.proc2l.y,s:w.s,over:false});
   if(val("proc")){add("dt",ausDate(val("dt")));add("tm",val("tm"))}
-  add("interp",val("interp"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc2"));
+  add("interp",val("interp"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc"));
   const ticks=[];const sx=sex();if(sx==="M")ticks.push("male");if(sx==="F")ticks.push("female");
   const ab=ageBox();if($("tickAge").checked&&ab)ticks.push(ab);
   for(const k of["xReq","xAnaes","xPhoto"])if($(k).checked)ticks.push(k);
-  return{text:out,ticks,procOver:w.over};
+  const p3=out.find(o=>o.k==="proc3");
+  return{text:out,ticks,procOver:w.over||!!(p3&&p3.over),procLineOver:!!(p3&&p3.over)};
 }
 
 /* ---------- preview ---------- */
@@ -323,12 +323,12 @@ function update(){
   $("ageHint").textContent=a===null?"":`${a} years`;
   $("ageBoxText").textContent=ab?`Tick "${{u14:"Under 14 years",a14:"14 – 16 years",a16:"16 years and over"}[ab]}"`:"Tick from date of birth";
   const it=items();
-  const ab1=abbrevs(val("proc")+" "+val("proc2")+" "+val("cond"));
+  const ab1=abbrevs(val("proc")+" "+val("cond"));
   $("procHint").className="hint"+(it.procOver||ab1.length?" warn":"");
-  $("procHint").textContent=it.procOver?"Too long for the two lines on the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits on the form's two lines.";
-  const overs=it.text.filter(t=>t.over&&t.k!=="proc1").map(t=>t.k);
+  $("procHint").textContent=!val("proc")?"Printed in both the practitioner and parent sections of the form.":it.procLineOver?"Too long for the one line in the parent section. Shorten it.":it.procOver?"Too long for the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits in both sections of the form.";
+  const overs=it.text.filter(t=>t.over&&t.k!=="proc1"&&t.k!=="proc3").map(t=>t.k);
   $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
-  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure and reasons",val("proc")&&!it.procOver],["Condition",val("cond")],["Procedure for parent section",val("proc2")],["Practitioner signature",strokes.length>0]];
+  const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Practitioner name",val("prac")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Practitioner signature",strokes.length>0]];
   $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
   const ready=need.every(n=>n[1])&&templateBytes&&font;
   $("emailPdf").disabled=!ready;
@@ -338,7 +338,7 @@ function update(){
 /* ---------- emails ---------- */
 function longDate(d){if(!d)return"";return new Date(d+"T00:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
 function emails(){
-  const child=val("giv")||"your child",pn=patientName()||"[patient]",par=val("parName")?val("parName").split(" ")[0]:"",op=val("proc2")||"[procedure]",sd=longDate(val("surg"));
+  const child=val("giv")||"your child",pn=patientName()||"[patient]",par=val("parName")?val("parName").split(" ")[0]:"",op=val("proc")||"[procedure]",sd=longDate(val("surg"));
   const onSd=sd?` on ${sd}`:"";
   const m1s=`Consent form for ${child}'s operation${onSd}`;
   const m1b=`Dear ${par||"Parent or guardian"},
