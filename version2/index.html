@@ -179,7 +179,11 @@ main .gut{padding-block:20px 64px}
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xReq" checked style="width:20px;height:20px;accent-color:var(--accent)">I request and consent to the procedure/treatment</label>
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xAnaes" checked style="width:20px;height:20px;accent-color:var(--accent)">I consent to anaesthetics, medicines or other treatment</label>
           <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xPhoto" checked style="width:20px;height:20px;accent-color:var(--accent)">I consent to patient photography</label>
-        </div><span class="hint">Untick any the family does not agree to.</span></div>
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xTissueAny" style="width:20px;height:20px;accent-color:var(--accent)">I consent to use of bodily tissue for any medical, therapeutic or scientific purpose</label>
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="xTissueRem" style="width:20px;height:20px;accent-color:var(--accent)">I consent to the use of bodily tissue which has been removed, conditional on the following terms</label>
+        </div>
+        <label class="lbl" for="tissueTerms" style="margin-top:6px">Terms for tissue use (optional)</label>
+        <input id="tissueTerms" type="text" autocomplete="off" placeholder="Leave blank if none"><span class="hint" id="termsHint">Tick or untick each box to match what the family agrees to.</span></div>
     </div>
   </section>
 
@@ -249,7 +253,7 @@ const L={
  pracPrint:{x:62,y:225,w:212},dt:{x:457,y:225,w:48},tm:{x:517,y:225,w:42},interp:{x:151,y:247,w:130},
  prac2:{x:62,y:283,w:205},pt:{x:354,y:283,w:210},cond:{x:62,y:308,w:508},proc3:{x:62,y:334,w:508},
  sig:{x:281,y:207,w:170,h:21},
- male:{x:470.6,y:35.3},female:{x:513.8,y:35.3},u14:{x:112.6,y:467.3},a14:{x:180.5,y:467.3},a16:{x:240,y:467.3},xReq:{x:64.2,y:481.9},xAnaes:{x:64.2,y:494.2},xPhoto:{x:64.2,y:506.0}
+ male:{x:470.6,y:35.3},female:{x:513.8,y:35.3},u14:{x:112.6,y:467.3},a14:{x:180.5,y:467.3},a16:{x:240,y:467.3},xReq:{x:64.2,y:481.9},xAnaes:{x:64.2,y:494.2},xPhoto:{x:64.2,y:506.0},xTissueAny:{x:64.2,y:515.1},xTissueRem:{x:64.2,y:535.6},terms:{x:62,y:548,w:490}
 };
 const FS=9, FS_MIN=6.5;
 let font=null, img=$("formImg"), templateBytes=null;
@@ -272,7 +276,7 @@ function wrap2(t,w){ // split into up to 2 lines, shrinking font if needed
 function abbrevs(t){const m=(t||"").match(/\b(?:[A-Z]{2,5}|[LR])\b/g)||[];return [...new Set(m.filter(x=>!["NSW","CHW","SCHN","MRN","DOB"].includes(x)))]}
 
 /* ---------- state from inputs ---------- */
-const ids=["fam","giv","mrn","dob","mo","prac","fac","proc","cond","dt","tm","surg","interp","parName","parEmail","admEmail"];
+const ids=["fam","giv","mrn","dob","mo","prac","fac","proc","cond","dt","tm","surg","interp","tissueTerms","parName","parEmail","admEmail"];
 function val(id){return $(id).value.trim()}
 function sex(){const r=document.querySelector('input[name=sex]:checked');return r?r.value:""}
 function age(){const d=val("dob");if(!d)return null;const b=new Date(d+"T00:00:00"),ref=val("dt")?new Date(val("dt")+"T00:00:00"):new Date();let a=ref.getFullYear()-b.getFullYear();if(ref<new Date(ref.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
@@ -290,10 +294,10 @@ function items(){
   add("prac1",val("prac"));add("pracPrint",val("prac"));add("prac2",val("prac"));
   const w=wrap2(val("proc"),L.proc1.w);if(w.lines[0])out.push({k:"proc1",t:w.lines[0],x:L.proc1.x,y:L.proc1.y,s:w.s,over:w.over});if(w.lines[1])out.push({k:"proc2l",t:w.lines[1],x:L.proc2l.x,y:L.proc2l.y,s:w.s,over:false});
   if(val("proc")){add("dt",ausDate(val("dt")));add("tm",val("tm"))}
-  add("interp",val("interp"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc"));
+  add("interp",val("interp"));add("terms",val("tissueTerms"));add("pt",patientName());add("cond",val("cond"));add("proc3",val("proc"));
   const ticks=[];const sx=sex();if(sx==="M")ticks.push("male");if(sx==="F")ticks.push("female");
   const ab=ageBox();if($("tickAge").checked&&ab)ticks.push(ab);
-  for(const k of["xReq","xAnaes","xPhoto"])if($(k).checked)ticks.push(k);
+  for(const k of["xReq","xAnaes","xPhoto","xTissueAny","xTissueRem"])if($(k).checked)ticks.push(k);
   const p3=out.find(o=>o.k==="proc3");
   return{text:out,ticks,procOver:w.over||!!(p3&&p3.over),procLineOver:!!(p3&&p3.over)};
 }
@@ -327,6 +331,7 @@ function update(){
   $("procHint").textContent=!val("proc")?"Printed in both the practitioner and parent sections of the form.":it.procLineOver?"Too long for the one line in the parent section. Shorten it.":it.procOver?"Too long for the form. Shorten it.":ab1.length?`Possible abbreviations: ${ab1.join(", ")}. Write them out in full.`:"Fits in both sections of the form.";
   const overs=it.text.filter(t=>t.over&&t.k!=="proc1"&&t.k!=="proc3").map(t=>t.k);
   $("condHint").textContent=overs.includes("cond")?"Too long for the line. Shorten it.":"";$("condHint").className="hint warn";
+  $("termsHint").className="hint"+(overs.includes("terms")?" warn":"");$("termsHint").textContent=overs.includes("terms")?"The tissue terms are too long for the line on the form. Shorten them.":"Tick or untick each box to match what the family agrees to.";
   const need=[["Patient name",val("fam")&&val("giv")],["MRN",val("mrn")],["Date of birth",val("dob")],["Procedure or treatment",val("proc")&&!it.procOver],["Condition",val("cond")],["Practitioner signature",strokes.length>0]];
   $("checks").innerHTML=need.map(([t,ok])=>`<div><span class="dot ${ok?"ok":""}"></span>${t}</div>`).join("");
   const ready=need.every(n=>n[1])&&templateBytes&&font;
@@ -582,6 +587,7 @@ function loadExample(){for(const[k,v]of Object.entries(EXAMPLE)){if(k==="sex"){$
   const d=new Date();d.setDate(d.getDate()+21);$("surg").value=d.toISOString().slice(0,10);$("exampleNote").hidden=false}
 function clearAll(){for(const id of ids){if(["fac","dt","tm"].includes(id))continue;$(id).value=""}
   for(const k of["xReq","xAnaes","xPhoto"])$(k).checked=true;
+  for(const k of["xTissueAny","xTissueRem"])$(k).checked=false;
   $("sexU").checked=true;$("dt").value=today();$("tm").value=nowTime();
   strokes.length=0;sigPng=null;redrawPad();$("admEmail").value=ADM_DEFAULT;$("exampleNote").hidden=true;$("sendStatus").textContent="";$("ocrStatus").textContent="";$("mrnHint").textContent="";$("labelText").value="";lastBarcode="";$("parseHint").className="hint";$("parseHint").textContent="Read on this device. Check every field against the label.";$("barcodeHint").className="hint";$("barcodeHint").textContent="The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.";update();window.scrollTo({top:0})}
 $("clearAll").onclick=clearAll;
@@ -589,7 +595,7 @@ $("clearAll").onclick=clearAll;
 for(const id of ids)$(id).addEventListener("input",()=>{if(id==="mrn")setMrnHint();update()});
 document.querySelectorAll('input[name=sex]').forEach(r=>r.addEventListener("change",update));
 $("tickAge").addEventListener("change",update);
-for(const k of["xReq","xAnaes","xPhoto"])$(k).addEventListener("change",update);
+for(const k of["xReq","xAnaes","xPhoto","xTissueAny","xTissueRem"])$(k).addEventListener("change",update);
 img.addEventListener("load",drawPreview);
 
 $("fac").value="The Children's Hospital at Westmead";$("dt").value=today();$("tm").value=nowTime();
