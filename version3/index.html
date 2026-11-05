@@ -133,8 +133,6 @@ main .gut{padding-block:20px 64px}
     <p class="sub">On iPhone, tap the <b>Scan label</b> box, tap it again and choose <b>Scan Text</b> (on newer iPhones it is under <b>AutoFill</b>). Point at the label and tap <b>Insert</b>. Or copy the label text with Live Text in the Camera app and tap <b>Paste</b>.</p>
     <div class="row">
       <button class="btn" id="scanBarcode" type="button">Scan barcode</button>
-      <label class="btn" for="labelPhoto" id="photoBtn" hidden>Photograph label</label>
-      <input type="file" id="labelPhoto" accept="image/*" capture="environment" hidden>
     </div>
     <p class="hint" id="barcodeHint" style="margin:8px 0 14px">The barcode usually holds the MRN. Use Scan label for the name, date of birth and M.O.</p>
     <div class="f" style="margin-bottom:16px">
@@ -142,7 +140,6 @@ main .gut{padding-block:20px 64px}
       <textarea id="labelText" class="scanbox" rows="4" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here twice, then Scan Text"></textarea>
       <div class="row"><button class="btn sm" id="pasteLabel" type="button">Paste</button><button class="btn sm" id="clearLabel" type="button">Clear text</button><span class="status" id="ocrStatus"></span></div>
       <span class="hint" id="parseHint">Read on this device. Check every field against the label.</span>
-      <p class="hint" id="privacyNote" style="margin:0" hidden>Photograph label sends the photo to Claude to read. Confirm this is allowed under SCHN privacy policy before using real labels.</p>
     </div>
     <div class="grid">
       <div class="f s3"><label class="lbl" for="fam">Family name</label><input id="fam" type="text" autocomplete="off"></div>
@@ -575,36 +572,6 @@ $("scanBarcode").addEventListener("click",()=>{
     bh.textContent=e&&(e.name==="NotAllowedError"||e.name==="SecurityError")?"Camera access was refused. Allow camera access for this site in Settings → Safari → Camera.":"Couldn't start the camera. Use Scan label instead.";
   });
 });
-/* ---------- label photo (claude.ai only) ---------- */
-let sample=null;
-$("labelPhoto").addEventListener("change",async e=>{
-  const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
-  const st=$("ocrStatus");$("mrnHint").textContent="";
-  let barcode="";
-  try{if("BarcodeDetector" in window){const bmp=await createImageBitmap(file);const codes=await new BarcodeDetector().detect(bmp);if(codes[0])barcode=codes[0].rawValue.trim()}}catch(_){}
-  if(!sample){st.textContent=barcode?`Barcode read: ${barcode}. Type the other details.`:"Label reading isn't available here. Type the details.";if(barcode)$("mrn").value=barcode;update();return}
-  st.textContent="Reading label…";$("photoBtn").setAttribute("aria-disabled","true");
-  try{
-    const r=await sample.json(`This photo shows a patient identification label from a NSW children's hospital. Read only what is printed on it.
-Reply with only this JSON object, using "" for anything not printed on the label (never guess):
-{"familyName":"","givenName":"","mrn":"","dob":"YYYY-MM-DD","sex":"M or F or empty","mo":"admitting medical officer (AMO) name if printed"}
-Australian dates are day/month/year.`,{images:file,cache:false});
-    const set=(id,v)=>{if(typeof v==="string"&&v.trim())$(id).value=v.trim()};
-    set("fam",r.familyName);set("giv",r.givenName?titleCase(r.givenName):"");set("mrn",r.mrn);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(r.dob||""))$("dob").value=r.dob;
-    set("mo",r.mo);
-    if(r.sex==="M")$("sexM").checked=true;else if(r.sex==="F")$("sexF").checked=true;
-    $("exampleNote").hidden=true;
-    st.textContent="Label read. Check each field against the label.";
-    if(barcode&&r.mrn&&barcode.replace(/\D/g,"")!==String(r.mrn).replace(/\D/g,"")){$("mrnHint").className="hint warn";$("mrnHint").textContent=`Barcode reads ${barcode}. Check the MRN.`}
-    else if(barcode){$("mrnHint").className="hint";$("mrnHint").textContent="Matches the barcode."}
-  }catch(err){
-    const c=err&&err.code;
-    st.textContent=c==="not_granted"||c==="sampling_disabled"||c==="images_unavailable"?"Label reading is turned off. Type the details.":c==="rate_limited"?"Too many reads just now. Wait a moment, or type the details.":c==="image_rejected"?"That photo couldn't be used. Try a clearer photo.":"Couldn't read the label. Try a clearer photo, or type the details.";
-    if(c==="not_granted"||c==="sampling_disabled"||c==="images_unavailable"){$("photoBtn").hidden=true;$("privacyNote").hidden=true;sample=null}
-  }finally{$("photoBtn").removeAttribute("aria-disabled");update()}
-});
-
 /* ---------- setup ---------- */
 const store={get(k){try{return localStorage.getItem(k)||""}catch(_){return""}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 function today(){const d=new Date();return d.toISOString().slice(0,10)}
@@ -636,12 +603,6 @@ update();
   try{const r=await fetch("../consent_form.pdf");if(r.ok)templateBytes=await r.arrayBuffer()}catch(_){}
   if(!templateBytes)$("sendStatus").textContent="The blank form didn't load. Reload the page.";
   update();
-})();
-(async()=>{
-  if(!window.claude||!claude.use)return;
-  const s=await claude.use("sample");
-  if(s){const lim=await s.limits().catch(()=>null);if(lim&&lim.images)sample=s}
-  if(sample){$("photoBtn").hidden=false;$("privacyNote").hidden=false}
 })();
 })();
 </script>
